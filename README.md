@@ -52,7 +52,6 @@
   <main class="container">
     <h1>.gitattributes perfeccionado</h1>
     <div class="note">
-      Este archivo está preparado para abrirse en Chrome. Copia el contenido del bloque y guárdalo como <strong>.gitattributes</strong> en la raíz de tu proyecto.
     </div>
     <pre><code># Normalize line endings across operating systems
 * text=auto eol=lf
