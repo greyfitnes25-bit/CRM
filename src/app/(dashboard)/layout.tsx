@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
@@ -36,11 +37,14 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         <Topbar onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
         <main className="flex-1 overflow-y-auto">
-          <div className="p-6">
+          <div className="p-4 md:p-6 pb-20 md:pb-6">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile bottom nav */}
+      <MobileNav />
     </div>
   );
 }
