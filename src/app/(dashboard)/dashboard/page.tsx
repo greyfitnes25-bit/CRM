@@ -277,7 +277,7 @@ export default function DashboardPage() {
     hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
 
   return (
-    <div className="space-y-6 page-transition">
+    <div className="space-y-4 md:space-y-6 page-transition">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>

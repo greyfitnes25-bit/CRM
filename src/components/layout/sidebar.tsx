@@ -10,6 +10,8 @@ import {
   Target,
   Users,
   Package,
+  Package2,
+  HardHat,
   FileText,
   ShoppingCart,
   Wrench,
@@ -36,6 +38,7 @@ const navItems = [
   { href: "/leads", label: "Leads / Embudo", icon: Target },
   { href: "/customers", label: "Clientes", icon: Users },
   { href: "/products", label: "Productos", icon: Package },
+  { href: "/inventory", label: "Inventario", icon: Package2, badge: 2 },
   { href: "/quotes", label: "Cotizaciones", icon: FileText },
   { href: "/sales", label: "Ventas", icon: ShoppingCart },
   { href: "/installations", label: "Instalaciones", icon: Wrench },
@@ -46,6 +49,7 @@ const navItems = [
 ];
 
 const bottomItems = [
+  { href: "/technician", label: "Panel Técnico", icon: HardHat },
   { href: "/settings", label: "Configuración", icon: Settings },
 ];
 
