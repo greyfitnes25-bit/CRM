@@ -701,6 +701,15 @@ export default function MessagesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile FAB: Nueva conversacion */}
+      <button
+        className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center transition-colors"
+        title="Nueva conversacion"
+        aria-label="Nueva conversacion"
+      >
+        <MessageSquare className="w-6 h-6" />
+      </button>
     </div>
   );
 }

@@ -76,38 +76,66 @@ export default function SalesPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Ventas</h1><p className="text-muted-foreground text-sm">{sales.length} ventas registradas</p></div>
-        <Button className="gap-2"><Plus className="w-4 h-4" /> Nueva Venta</Button>
+        <Button className="gap-2"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Venta</span><span className="sm:hidden">Nueva</span></Button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map(stat => (
           <Card key={stat.label}>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${stat.bg}`}><stat.icon className={`w-6 h-6 ${stat.color}`} /></div>
-              <div><div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div><div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div></div>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${stat.bg} shrink-0`}><stat.icon className={`w-5 h-5 ${stat.color}`} /></div>
+              <div><div className={`text-xl font-bold ${stat.color}`}>{stat.value}</div><div className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</div></div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar por cliente o número..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Buscar..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36 md:w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos los estados</SelectItem>
+            <SelectItem value="ALL">Todos</SelectItem>
             {Object.entries(SALE_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      <Card>
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {filtered.map(sale => (
+          <div
+            key={sale.id}
+            className="p-4 rounded-xl border border-border bg-card cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => setDetailSale(sale)}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className="font-mono font-semibold text-blue-600 text-sm">{sale.number}</span>
+                <div className="font-medium mt-0.5">{sale.customerName}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-48">{sale.products[0]}{sale.products.length > 1 && ` +${sale.products.length - 1}`}</div>
+              </div>
+              <Badge variant="outline" className={`text-xs shrink-0 ${SALE_STATUS_COLORS[sale.status]}`}>{SALE_STATUS_LABELS[sale.status]}</Badge>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <span className="text-lg font-bold">${sale.total.toLocaleString()}</span>
+                {sale.total - sale.paid > 0 && <span className="text-xs text-orange-600 ml-2">Pendiente: ${(sale.total - sale.paid).toLocaleString()}</span>}
+              </div>
+              <span className="text-xs text-muted-foreground">{sale.date}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table view */}
+      <Card className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b bg-muted/50">

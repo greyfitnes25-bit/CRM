@@ -104,18 +104,18 @@ export default function WarrantiesPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Garantías</h1><p className="text-muted-foreground text-sm">{warranties.length} garantías registradas</p></div>
-        <Button onClick={() => setCaseFormOpen(true)} className="gap-2"><Plus className="w-4 h-4" /> Nuevo Caso</Button>
+        <Button onClick={() => setCaseFormOpen(true)} className="gap-2"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nuevo Caso</span><span className="sm:hidden">Caso</span></Button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {summaryCards.map(s => (
           <Card key={s.label}>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${s.bg}`}><s.icon className={`w-6 h-6 ${s.color}`} /></div>
-              <div><div className={`text-2xl font-bold ${s.color}`}>{s.value}</div><div className="text-xs text-muted-foreground mt-0.5">{s.label}</div></div>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${s.bg} shrink-0`}><s.icon className={`w-5 h-5 ${s.color}`} /></div>
+              <div><div className={`text-xl font-bold ${s.color}`}>{s.value}</div><div className="text-xs text-muted-foreground mt-0.5 leading-tight">{s.label}</div></div>
             </CardContent>
           </Card>
         ))}
@@ -125,13 +125,42 @@ export default function WarrantiesPage() {
         <TabsList><TabsTrigger value="warranties">Garantías</TabsTrigger><TabsTrigger value="cases">Casos</TabsTrigger></TabsList>
 
         <TabsContent value="warranties" className="mt-4">
-          <div className="flex gap-3 mb-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar garantías..." className="pl-9" value={wSearch} onChange={e => setWSearch(e.target.value)} />
             </div>
           </div>
-          <Card>
+
+          {/* Mobile card view */}
+          <div className="md:hidden space-y-3">
+            {filteredW.map(w => (
+              <div key={w.id} className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{w.product}</div>
+                    <div className="text-muted-foreground text-sm">{w.customerName}</div>
+                  </div>
+                  <Badge variant="outline" className={`text-xs shrink-0 ${WARRANTY_STATUS_COLORS[w.status]}`}>{WARRANTY_STATUS_LABELS[w.status]}</Badge>
+                </div>
+                <div className="mt-3 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Vence: {w.endDate}</span>
+                    <span className="font-medium">{w.daysRemaining > 0 ? `${w.daysRemaining} días restantes` : "Vencida"}</span>
+                  </div>
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                    <div className={`h-full transition-all ${getDaysColor(w.daysRemaining, w.totalDays)}`} style={{ width: `${Math.max(0, Math.min(100, (w.daysRemaining / w.totalDays) * 100))}%` }} />
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="w-full mt-3 h-8 text-xs gap-1" onClick={() => setCaseFormOpen(true)}>
+                  <Plus className="w-3 h-3" /> Abrir caso de garantía
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <Card className="hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b bg-muted/50">
@@ -177,13 +206,35 @@ export default function WarrantiesPage() {
         </TabsContent>
 
         <TabsContent value="cases" className="mt-4">
-          <div className="flex gap-3 mb-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar casos..." className="pl-9" value={cSearch} onChange={e => setCSearch(e.target.value)} />
             </div>
           </div>
-          <Card>
+
+          {/* Mobile card view */}
+          <div className="md:hidden space-y-3">
+            {filteredC.map(c => (
+              <div key={c.id} className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="font-mono text-blue-600 text-sm font-semibold">{c.number}</span>
+                    <div className="font-medium mt-0.5">{c.title}</div>
+                    <div className="text-xs text-muted-foreground">{c.customerName} · {c.warrantyProduct}</div>
+                  </div>
+                  <Badge variant="outline" className={`text-xs shrink-0 ${CASE_STATUS_COLORS[c.status]}`}>{CASE_STATUS_LABELS[c.status]}</Badge>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{c.assignedTo || "Sin asignar"}</span>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openDetailCase(c)}><Eye className="w-3 h-3 mr-1" />Ver</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <Card className="hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b bg-muted/50">

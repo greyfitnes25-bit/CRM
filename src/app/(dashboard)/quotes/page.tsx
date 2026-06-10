@@ -167,26 +167,55 @@ export default function QuotesPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Cotizaciones</h1><p className="text-muted-foreground text-sm">{quotes.length} cotizaciones en total</p></div>
-        <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Nueva Cotización</Button>
+        <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Cotización</span><span className="sm:hidden">Nueva</span></Button>
       </div>
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar por cliente o número..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Buscar..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectTrigger className="w-36 md:w-44"><SelectValue placeholder="Estado" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos los estados</SelectItem>
+            <SelectItem value="ALL">Todos</SelectItem>
             {Object.entries(QUOTE_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      <Card>
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {filtered.map(quote => (
+          <div key={quote.id} className="p-4 rounded-xl border border-border bg-card">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className="font-mono font-semibold text-blue-600 text-sm">{quote.number}</span>
+                <div className="font-medium mt-0.5">{quote.customerName}</div>
+                <div className="text-xs text-muted-foreground">{quote.items.length} producto{quote.items.length !== 1 ? "s" : ""}</div>
+              </div>
+              <Badge variant="outline" className={`text-xs shrink-0 ${QUOTE_STATUS_COLORS[quote.status]}`}>{QUOTE_STATUS_LABELS[quote.status]}</Badge>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <span className="text-lg font-bold">${quote.total.toLocaleString()}</span>
+                {quote.discount > 0 && <span className="text-xs text-green-600 ml-2">{quote.discount}% desc.</span>}
+              </div>
+              <span className="text-xs text-muted-foreground">{quote.date}</span>
+            </div>
+            <div className="mt-2 flex gap-2">
+              <Button size="sm" variant="outline" className="flex-1 h-8 text-xs gap-1" onClick={() => setDetailQuote(quote)}><Eye className="w-3 h-3" /> Ver</Button>
+              <Button size="sm" variant="outline" className="flex-1 h-8 text-xs gap-1" onClick={() => openEdit(quote)}><Edit2 className="w-3 h-3" /> Editar</Button>
+              <Button size="sm" variant="outline" className="flex-1 h-8 text-xs gap-1 text-blue-600 border-blue-200"><Send className="w-3 h-3" /> Enviar</Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table view */}
+      <Card className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b bg-muted/50">
@@ -226,7 +255,7 @@ export default function QuotesPage() {
       </Card>
 
       <Dialog open={builderOpen} onOpenChange={setBuilderOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg w-full mx-4 md:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />{editingQuote ? `Editar ${editingQuote.number}` : "Nueva Cotización"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1">

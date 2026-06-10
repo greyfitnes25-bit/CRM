@@ -99,38 +99,66 @@ export default function ReturnsPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Devoluciones</h1><p className="text-muted-foreground text-sm">{returns.length} devoluciones registradas</p></div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2"><Plus className="w-4 h-4" /> Nueva Devolución</Button>
+        <Button onClick={() => setCreateOpen(true)} className="gap-2"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Devolución</span><span className="sm:hidden">Nueva</span></Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {stats.map(s => (
           <Card key={s.label}>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${s.bg}`}><s.icon className={`w-6 h-6 ${s.color}`} /></div>
-              <div><div className={`text-2xl font-bold ${s.color}`}>{s.value}</div><div className="text-xs text-muted-foreground">{s.label}</div></div>
+            <CardContent className="p-3 md:p-4 flex items-center gap-3">
+              <div className={`p-2 rounded-xl ${s.bg} shrink-0`}><s.icon className={`w-4 h-4 md:w-5 md:h-5 ${s.color}`} /></div>
+              <div><div className={`text-lg md:text-2xl font-bold ${s.color}`}>{s.value}</div><div className="text-[10px] md:text-xs text-muted-foreground leading-tight">{s.label}</div></div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar devoluciones..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Buscar..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36 md:w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos los estados</SelectItem>
+            <SelectItem value="ALL">Todos</SelectItem>
             {Object.entries(RETURN_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      <Card>
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {filtered.map(ret => (
+          <div
+            key={ret.id}
+            className="p-4 rounded-xl border border-border bg-card cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => setDetailReturn(ret)}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className="font-mono text-blue-600 text-sm font-semibold">{ret.number}</span>
+                <div className="font-medium mt-0.5">{ret.customerName}</div>
+                <div className="text-xs text-muted-foreground truncate max-w-48">{ret.product}</div>
+              </div>
+              <Badge variant="outline" className={`text-xs shrink-0 ${RETURN_STATUS_COLORS[ret.status]}`}>{RETURN_STATUS_LABELS[ret.status]}</Badge>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <div>
+                <span className="font-bold text-red-600">${ret.amount.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground ml-2">{ret.reason}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{ret.date}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table view */}
+      <Card className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b bg-muted/50">

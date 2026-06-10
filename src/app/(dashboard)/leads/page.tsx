@@ -163,6 +163,11 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      {/* Mobile horizontal scroll tip */}
+      <div className="md:hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 mx-0 mb-2 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+        <span>👆</span> Desliza horizontalmente para ver todas las etapas
+      </div>
+
       {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden">
         <div className="flex gap-3 px-6 py-4 h-full min-w-max">

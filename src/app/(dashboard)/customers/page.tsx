@@ -126,35 +126,81 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Clientes</h1>
           <p className="text-muted-foreground text-sm">{customers.length} clientes registrados</p>
         </div>
         <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Cliente
+          <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nuevo Cliente</span><span className="sm:hidden">Nuevo</span>
         </Button>
       </div>
 
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar por nombre, teléfono o email..." className="pl-9" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          <Input placeholder="Buscar..." className="pl-9" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <Select value={sourceFilter} onValueChange={v => { setSourceFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-36 md:w-44">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Fuente" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todas las fuentes</SelectItem>
+            <SelectItem value="ALL">Todas</SelectItem>
             {Object.entries(CUSTOMER_SOURCE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      <Card>
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {paginated.map(customer => (
+          <div
+            key={customer.id}
+            className="p-4 rounded-xl border border-border bg-card cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => setSelectedCustomer(customer)}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Avatar className="w-10 h-10 shrink-0">
+                  <AvatarFallback className={`${getColor(customer.id)} text-white text-sm font-bold`}>
+                    {getInitials(customer.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">{customer.name}</div>
+                  <div className="text-xs text-muted-foreground">{customer.phone}</div>
+                </div>
+              </div>
+              <Badge variant="outline" className={`text-xs shrink-0 ${CUSTOMER_SOURCE_COLORS[customer.source] || ""}`}>
+                {CUSTOMER_SOURCE_LABELS[customer.source] || customer.source}
+              </Badge>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <div className="flex gap-1 flex-wrap">
+                {customer.tags.slice(0, 2).map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                ))}
+                {customer.tags.length > 2 && <Badge variant="secondary" className="text-xs">+{customer.tags.length - 2}</Badge>}
+              </div>
+              <span className="text-xs text-muted-foreground">{customer.lastActivity}</span>
+            </div>
+            <div className="mt-2 flex gap-2" onClick={e => e.stopPropagation()}>
+              <Button size="sm" variant="outline" className="flex-1 h-8 text-xs gap-1" onClick={() => openEdit(customer)}>
+                <Edit2 className="w-3 h-3" /> Editar
+              </Button>
+              <Button size="sm" variant="outline" className="flex-1 h-8 text-xs gap-1 text-green-600 border-green-200">
+                <MessageCircle className="w-3 h-3" /> Chat
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table view */}
+      <Card className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -242,12 +288,29 @@ export default function CustomersPage() {
         )}
       </Card>
 
+      {/* Mobile pagination */}
+      {totalPages > 1 && (
+        <div className="md:hidden flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} de {filtered.length}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingCustomer ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">Nombre completo *</label>
               <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nombre del cliente" />
