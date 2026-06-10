@@ -1,1118 +1,1365 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GreyCRM — Demo Interactiva</title>
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-  :root {
-    --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
-    --border: #334155; --text: #f1f5f9; --muted: #94a3b8;
-    --primary: #3b82f6; --primary-dark: #2563eb;
-    --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
-    --purple: #8b5cf6; --pink: #ec4899;
-  }
-  body { background: var(--bg); color: var(--text); margin: 0; overflow: hidden; height: 100vh; }
-  .screen { display: none; height: 100vh; }
-  .screen.active { display: flex; }
-  .sidebar { width: 240px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; transition: width 0.2s; }
-  .sidebar.collapsed { width: 64px; }
-  .sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text, .sidebar.collapsed .user-info { display: none; }
-  .sidebar.collapsed .nav-item { justify-content: center; padding: 10px; }
-  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-  .topbar { height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
-  .content { flex: 1; overflow-y: auto; padding: 24px; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 8px; cursor: pointer; margin: 2px 8px; font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.15s; white-space: nowrap; }
-  .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
-  .nav-item.active { background: rgba(59,130,246,0.15); color: var(--primary); }
-  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-  .metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; }
-  .metric-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-  .badge-green { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
-  .badge-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-  .badge-yellow { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-  .badge-red { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-  .badge-purple { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
-  .badge-gray { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
-  .badge-pink { background: rgba(236,72,153,0.15); color: #f472b6; border: 1px solid rgba(236,72,153,0.3); }
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; }
-  .btn-primary { background: var(--primary); color: white; }
-  .btn-primary:hover { background: var(--primary-dark); }
-  .btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-outline:hover { color: var(--text); border-color: var(--muted); }
-  .input { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; outline: none; width: 100%; }
-  .input:focus { border-color: var(--primary); }
-  .table-row { display: grid; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: center; font-size: 13px; transition: background 0.1s; }
-  .table-row:hover { background: rgba(255,255,255,0.03); }
-  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #1e3a5f, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; color: #60a5fa; }
-  .kanban-col { width: 240px; flex-shrink: 0; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; max-height: 100%; }
-  .kanban-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 6px; cursor: grab; transition: all 0.15s; }
-  .kanban-card:hover { border-color: rgba(59,130,246,0.4); box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
-  .progress-bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
-  .chat-bubble-in { background: var(--bg3); border-radius: 18px 18px 18px 4px; padding: 10px 14px; max-width: 70%; font-size: 13px; line-height: 1.5; }
-  .chat-bubble-out { background: var(--primary); border-radius: 18px 18px 4px 18px; padding: 10px 14px; max-width: 70%; font-size: 13px; line-height: 1.5; color: white; }
-  .chat-bubble-note { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 10px 14px; max-width: 80%; font-size: 13px; color: #fbbf24; }
-  .stat-up { color: #34d399; font-size: 12px; }
-  .stat-down { color: #f87171; font-size: 12px; }
-  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .tab-btn { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; background: none; border-left: none; border-right: none; border-top: none; }
-  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-  .section { display: none; }
-  .tech-phone { max-width: 360px; margin: 0 auto; background: var(--bg2); border-radius: 32px; border: 2px solid var(--border); overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.5); }
-  .stock-bar-wrap { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; width: 80px; }
-  .tooltip { position: relative; }
-  .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap; z-index: 99; border: 1px solid var(--border); }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .fade-in { animation: fadeIn 0.25s ease; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-  .pulse { animation: pulse 2s infinite; }
-  .demo-banner { background: linear-gradient(90deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.3); border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #93c5fd; display: flex; align-items: center; gap: 8px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#f8fafc;height:100vh;overflow:hidden;}
+#app{display:flex;height:100vh;overflow:hidden;}
+#sidebar{width:240px;background:#1e293b;border-right:1px solid #334155;display:flex;flex-direction:column;flex-shrink:0;}
+#main{flex:1;overflow:auto;background:#0f172a;}
+.section{display:none;}
+.sidebar-header{padding:16px;border-bottom:1px solid #334155;display:flex;align-items:center;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;color:#94a3b8;font-size:14px;transition:all 0.15s;}
+.nav-item:hover{background:#334155;color:#f8fafc;}
+.nav-item.active{background:rgba(59,130,246,0.15);color:#60a5fa;border-left:3px solid #3b82f6;}
+.card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155;}
+.hover-card{transition:transform 0.15s,border-color 0.15s;}
+.hover-card:hover{transform:translateY(-2px);border-color:#475569;}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:opacity 0.15s;white-space:nowrap;}
+.btn:hover{opacity:0.85;}
+.btn-primary{background:#3b82f6;color:white;}
+.btn-ghost{background:#334155;color:#f8fafc;}
+.btn-danger{background:#ef4444;color:white;}
+.btn-success{background:#10b981;color:white;}
+.btn-warning{background:#f59e0b;color:white;}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.input{background:#0f172a;border:1px solid #334155;color:#f8fafc;padding:8px 12px;border-radius:8px;font-size:14px;width:100%;outline:none;transition:border-color 0.15s;}
+.input:focus{border-color:#3b82f6;}
+.form-label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.table{width:100%;border-collapse:collapse;font-size:13px;}
+.table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #334155;white-space:nowrap;}
+.table td{padding:10px 14px;border-bottom:1px solid #1e293b;color:#e2e8f0;vertical-align:middle;}
+.table tbody tr:hover{background:#1e293b;}
+.tab{background:transparent;border:1px solid #334155;color:#94a3b8;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.15s;}
+.tab:hover{background:#334155;color:#f8fafc;}
+.tab-active{background:#334155;color:#f8fafc;border-color:#475569;}
+.kanban-col{background:#1e293b;border-radius:12px;padding:16px;min-width:230px;border:1px solid #334155;}
+.kanban-col-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:13px;color:#f8fafc;}
+.kanban-card{background:#0f172a;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;border:1px solid #334155;transition:all 0.15s;}
+.kanban-card:hover{border-color:#3b82f6;transform:translateY(-1px);}
+.conv-item{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #1e293b;transition:background 0.15s;}
+.conv-item:hover{background:#334155;}
+.conv-item.active{background:rgba(59,130,246,0.08);border-left:3px solid #3b82f6;}
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9000;align-items:center;justify-content:center;}
+#modal-box{background:#1e293b;border-radius:16px;width:90%;max-width:580px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,0.5);}
+#modal-header{padding:20px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+#modal-title{font-weight:700;font-size:16px;color:#f8fafc;}
+#modal-body{padding:24px;overflow-y:auto;flex:1;}
+#modal-footer{padding:16px 24px;border-top:1px solid #334155;display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#0f172a;}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:3px;}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════ LOGIN SCREEN ═══════════════════════════════════ -->
-<div id="screen-login" class="screen active" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); align-items: center; justify-content: center;">
-  <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),radial-gradient(circle at 80% 20%, rgba(139,92,246,0.08) 0%, transparent 50%);"></div>
-  <div style="width:100%;max-width:420px;padding:24px;position:relative;">
-    <!-- Logo -->
-    <div style="text-align:center;margin-bottom:36px;">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 32px rgba(59,130,246,0.3);">
-        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      </div>
-      <h1 style="font-size:28px;font-weight:800;margin:0;letter-spacing:-0.5px;">Grey<span style="color:#3b82f6;">CRM</span></h1>
-      <p style="color:#64748b;margin:4px 0 0;font-size:14px;">Plataforma de gestión comercial</p>
+<div id="toast-container"></div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-header">
+      <span id="modal-title"></span>
+      <button onclick="closeModal()" style="background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;line-height:1;">&#x2715;</button>
     </div>
-    <!-- Card -->
-    <div class="card" style="padding:32px;">
-      <h2 style="font-size:20px;font-weight:700;margin:0 0 6px;">Bienvenido</h2>
-      <p style="color:var(--muted);font-size:13px;margin:0 0 24px;">Ingresa tus credenciales para continuar</p>
-      <div class="demo-banner" style="margin-bottom:20px;">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Demo: <strong>admin@greycrm.com</strong> / <strong>demo123</strong>
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">EMAIL</label>
-        <input class="input" type="email" value="admin@greycrm.com" style="width:100%;">
-      </div>
-      <div style="margin-bottom:24px;">
-        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">CONTRASEÑA</label>
-        <input class="input" type="password" value="demo123" style="width:100%;">
-      </div>
-      <button class="btn btn-primary" onclick="showScreen('dashboard')" style="width:100%;justify-content:center;padding:12px;font-size:14px;font-weight:600;border-radius:10px;box-shadow:0 4px 20px rgba(59,130,246,0.3);">
-        Entrar al CRM →
-      </button>
-      <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:16px;">¿Nuevo negocio? <a href="#" style="color:var(--primary);text-decoration:none;">Registrar empresa</a></p>
-    </div>
+    <div id="modal-body"></div>
+    <div id="modal-footer"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ MAIN APP SCREEN ═══════════════════════════════════ -->
-<div id="screen-app" class="screen" style="overflow:hidden;">
-  <!-- SIDEBAR -->
-  <div class="sidebar scrollbar-thin" id="sidebar" style="overflow-y:auto;overflow-x:hidden;">
-    <!-- Logo -->
-    <div style="padding:16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <div style="width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      </div>
-      <div class="logo-text">
-        <div style="font-size:15px;font-weight:800;letter-spacing:-0.3px;">Grey<span style="color:#3b82f6;">CRM</span></div>
-        <div style="font-size:10px;color:var(--muted);">TechSecurity CDMX</div>
-      </div>
-    </div>
-    <!-- Nav -->
-    <nav style="padding:8px 0;flex:1;">
-      <div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;" class="nav-label">Principal</div>
-      <div class="nav-item active" onclick="showSection('dashboard')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span class="nav-label">Dashboard</span>
-      </div>
-      <div class="nav-item" onclick="showSection('messages')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <span class="nav-label">Mensajes</span>
-        <span style="background:#3b82f6;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;" class="nav-label">6</span>
-      </div>
-      <div class="nav-item" onclick="showSection('kanban')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <span class="nav-label">Leads / Embudo</span>
-      </div>
-      <div class="nav-item" onclick="showSection('customers')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span class="nav-label">Clientes</span>
-      </div>
-      <div class="nav-item" onclick="showSection('inventory')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-        <span class="nav-label">Inventario</span>
-        <span style="background:rgba(245,158,11,0.2);color:#fbbf24;font-size:10px;font-weight:700;padding:1px 5px;border-radius:20px;margin-left:auto;" class="nav-label">2</span>
-      </div>
-      <div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-top:8px;" class="nav-label">Ventas</div>
-      <div class="nav-item" onclick="showSection('dashboard')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span class="nav-label">Cotizaciones</span>
-      </div>
-      <div class="nav-item" onclick="showSection('dashboard')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span class="nav-label">Ventas</span>
-      </div>
-      <div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-top:8px;" class="nav-label">Servicio</div>
-      <div class="nav-item" onclick="showSection('technician')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        <span class="nav-label">Instalaciones</span>
-      </div>
-      <div class="nav-item" onclick="showSection('dashboard')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span class="nav-label">Garantías</span>
-      </div>
-      <div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-top:8px;" class="nav-label">Marketing</div>
-      <div class="nav-item" onclick="showSection('metaads')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-        <span class="nav-label">Meta Ads</span>
-      </div>
-    </nav>
-    <!-- User -->
-    <div style="border-top:1px solid var(--border);padding:12px;flex-shrink:0;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="avatar" style="background:linear-gradient(135deg,#1d4ed8,#312e81);">CM</div>
-        <div class="user-info">
-          <div style="font-size:13px;font-weight:600;">Carlos Méndez</div>
-          <div style="font-size:11px;color:var(--muted);">Administrador</div>
-        </div>
-      </div>
-    </div>
+<div id="app">
+  <div id="sidebar"></div>
+  <div id="main">
+    <div id="section-dashboard" class="section"></div>
+    <div id="section-messages" class="section" style="height:100vh;"></div>
+    <div id="section-kanban" class="section" style="height:100vh;"></div>
+    <div id="section-customers" class="section"></div>
+    <div id="section-inventory" class="section"></div>
+    <div id="section-technician" class="section"></div>
+    <div id="section-metaads" class="section"></div>
+    <div id="section-settings" class="section"></div>
   </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <button onclick="document.getElementById('sidebar').classList.toggle('collapsed')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;" title="Colapsar menú">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div style="flex:1;max-width:320px;position:relative;">
-        <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="input" placeholder="Buscar en GreyCRM..." style="padding-left:32px;height:34px;">
-      </div>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-        <!-- Notification bell -->
-        <button style="background:none;border:none;cursor:pointer;color:var(--muted);position:relative;padding:6px;" title="Notificaciones">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid var(--bg2);"></span>
-        </button>
-        <!-- Theme -->
-        <button style="background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;" title="Cambiar tema">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <div class="avatar" style="cursor:pointer;" title="Perfil">CM</div>
-      </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="content scrollbar-thin" id="main-content">
-
-      <!-- ─── DASHBOARD SECTION ─── -->
-      <div id="section-dashboard" class="section active fade-in" style="display:block;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-          <div>
-            <h1 style="font-size:22px;font-weight:800;margin:0;letter-spacing:-0.3px;">Buenos días, Carlos 👋</h1>
-            <p style="color:var(--muted);font-size:13px;margin:4px 0 0;">Martes, 10 de junio 2026 · TechSecurity CDMX</p>
-          </div>
-          <div class="demo-banner">
-            <div class="pulse" style="width:6px;height:6px;background:#3b82f6;border-radius:50%;"></div>
-            Vista demo — datos simulados
-          </div>
-        </div>
-
-        <!-- Metric Cards -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;">
-          <div class="metric-card">
-            <div class="metric-icon" style="background:rgba(59,130,246,0.15);">
-              <svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Leads Totales</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;">148</div>
-              <div class="stat-up">↑ +12 esta semana</div>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon" style="background:rgba(16,185,129,0.15);">
-              <svg width="20" height="20" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Ventas del Mes</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;">$125K</div>
-              <div class="stat-up">↑ +8.3% vs anterior</div>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon" style="background:rgba(139,92,246,0.15);">
-              <svg width="20" height="20" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Conversaciones</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;">24</div>
-              <div style="color:#fbbf24;font-size:12px;">6 sin responder</div>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon" style="background:rgba(245,158,11,0.15);">
-              <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Instalaciones</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;">8</div>
-              <div style="color:#f87171;font-size:12px;">3 pendientes hoy</div>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon" style="background:rgba(236,72,153,0.15);">
-              <svg width="20" height="20" fill="none" stroke="#ec4899" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Garantías Activas</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;">47</div>
-              <div style="color:#fbbf24;font-size:12px;">5 por vencer</div>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon" style="background:rgba(16,185,129,0.1);">
-              <svg width="20" height="20" fill="none" stroke="#34d399" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">ROAS Meta Ads</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;">3.8×</div>
-              <div class="stat-up">↑ Excelente rendimiento</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Charts Row -->
-        <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;">
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-              <div>
-                <h3 style="font-size:14px;font-weight:700;margin:0;">Ingresos — Últimos 7 días</h3>
-                <p style="font-size:12px;color:var(--muted);margin:2px 0 0;">Total: <strong style="color:#34d399;">$130,500 MXN</strong></p>
-              </div>
-              <span class="badge badge-green">+8.3%</span>
-            </div>
-            <div style="position:relative;height:140px;"><canvas id="revenueChart"></canvas></div>
-          </div>
-          <div class="card">
-            <h3 style="font-size:14px;font-weight:700;margin:0 0 16px;">Leads por Canal</h3>
-            <div style="position:relative;height:160px;"><canvas id="channelChart"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Sales Funnel + Top Sellers -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div class="card">
-            <h3 style="font-size:14px;font-weight:700;margin:0 0 16px;">Embudo de Ventas</h3>
-            <div>
-              <div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">Nuevo Lead</span><span style="font-size:12px;font-weight:700;">85 leads</span></div><div class="progress-bar"><div class="progress-fill" style="width:100%;background:#3b82f6;"></div></div></div>
-              <div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">Contactado</span><span style="font-size:12px;font-weight:700;">64 leads</span></div><div class="progress-bar"><div class="progress-fill" style="width:75%;background:#06b6d4;"></div></div></div>
-              <div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">Cotizado</span><span style="font-size:12px;font-weight:700;">43 leads</span></div><div class="progress-bar"><div class="progress-fill" style="width:51%;background:#f59e0b;"></div></div></div>
-              <div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">Negociación</span><span style="font-size:12px;font-weight:700;">28 leads</span></div><div class="progress-bar"><div class="progress-fill" style="width:33%;background:#f97316;"></div></div></div>
-              <div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">Pago Pendiente</span><span style="font-size:12px;font-weight:700;">19 leads</span></div><div class="progress-bar"><div class="progress-fill" style="width:22%;background:#8b5cf6;"></div></div></div>
-              <div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">Vendido</span><span style="font-size:12px;font-weight:700;">15 leads</span></div><div class="progress-bar"><div class="progress-fill" style="width:18%;background:#10b981;"></div></div></div>
-            </div>
-          </div>
-          <div class="card">
-            <h3 style="font-size:14px;font-weight:700;margin:0 0 16px;">Top Vendedores</h3>
-            <div>
-              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;">
-                <span style="font-size:16px;font-weight:800;color:var(--muted);width:20px;">1</span>
-                <div class="avatar" style="background:linear-gradient(135deg,#3b82f633,#3b82f611);color:#3b82f6;">JP</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Juan Pérez</div><div style="font-size:11px;color:var(--muted);">32 ventas</div></div>
-                <div style="font-size:13px;font-weight:700;color:#34d399;">$89,500</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);">
-                <span style="font-size:16px;font-weight:800;color:var(--muted);width:20px;">2</span>
-                <div class="avatar" style="background:linear-gradient(135deg,#8b5cf633,#8b5cf611);color:#8b5cf6;">AG</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Ana García</div><div style="font-size:11px;color:var(--muted);">28 ventas</div></div>
-                <div style="font-size:13px;font-weight:700;color:#34d399;">$76,200</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);">
-                <span style="font-size:16px;font-weight:800;color:var(--muted);width:20px;">3</span>
-                <div class="avatar" style="background:linear-gradient(135deg,#10b98133,#10b98111);color:#10b981;">LT</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Luis Torres</div><div style="font-size:11px;color:var(--muted);">19 ventas</div></div>
-                <div style="font-size:13px;font-weight:700;color:#34d399;">$51,800</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);">
-                <span style="font-size:16px;font-weight:800;color:var(--muted);width:20px;">4</span>
-                <div class="avatar" style="background:linear-gradient(135deg,#f59e0b33,#f59e0b11);color:#f59e0b;">MR</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:600;">María Ruiz</div><div style="font-size:11px;color:var(--muted);">14 ventas</div></div>
-                <div style="font-size:13px;font-weight:700;color:#34d399;">$38,400</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── MESSAGES SECTION ─── -->
-      <div id="section-messages" class="section fade-in" style="margin:-24px;height:calc(100vh - 56px);">
-        <div style="display:flex;height:100%;">
-          <!-- Conversation List -->
-          <div style="width:300px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg2);">
-            <div style="padding:14px;border-bottom:1px solid var(--border);">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <span style="font-size:15px;font-weight:700;">Mensajes <span style="background:#3b82f6;color:white;font-size:10px;padding:1px 6px;border-radius:20px;">6</span></span>
-              </div>
-              <input class="input" placeholder="🔍 Buscar..." style="height:32px;font-size:12px;">
-            </div>
-            <div style="display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--border);overflow-x:auto;">
-              <button style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--primary);color:white;border:none;">Todos</button>
-              <button style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--bg3);color:var(--muted);border:none;">WhatsApp</button>
-              <button style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--bg3);color:var(--muted);border:none;">Instagram</button>
-              <button style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--bg3);color:var(--muted);border:none;">Messenger</button>
-            </div>
-            <div style="flex:1;overflow-y:auto;" class="scrollbar-thin">
-              <!-- chat-0: María González WA -->
-              <div onclick="selectChat(0)" id="chat-0" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(59,130,246,0.08);border-left:2px solid #3b82f6;">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <div style="position:relative;"><div class="avatar" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">MG</div><div style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#25d366;border:2px solid var(--bg2);"></div></div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:700;">María González</span><span style="font-size:10px;color:var(--muted);">3 min</span></div>
-                    <p style="font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">Hola, ¿me pueden dar información sobre los precios?</p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;"><span class="badge badge-green" style="font-size:9px;padding:1px 5px;">Abierta</span><span style="background:#3b82f6;color:white;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span></div>
-                  </div>
-                </div>
-              </div>
-              <!-- chat-1: Carlos Rodríguez IG -->
-              <div onclick="selectChat(1)" id="chat-1" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <div style="position:relative;"><div class="avatar" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">CR</div><div style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#e1306c;border:2px solid var(--bg2);"></div></div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:600;">Carlos Rodríguez</span><span style="font-size:10px;color:var(--muted);">15 min</span></div>
-                    <p style="font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">Vi tu publicación y me interesó el producto.</p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;"><span class="badge badge-green" style="font-size:9px;padding:1px 5px;">Abierta</span></div>
-                  </div>
-                </div>
-              </div>
-              <!-- chat-2: Laura Martínez MSG -->
-              <div onclick="selectChat(2)" id="chat-2" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <div style="position:relative;"><div class="avatar" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">LM</div><div style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#1877f2;border:2px solid var(--bg2);"></div></div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:700;">Laura Martínez</span><span style="font-size:10px;color:var(--muted);">45 min</span></div>
-                    <p style="font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">¿Tienen garantía en sus productos?</p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;"><span class="badge badge-yellow" style="font-size:9px;padding:1px 5px;">Pendiente</span><span style="background:#3b82f6;color:white;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span></div>
-                  </div>
-                </div>
-              </div>
-              <!-- chat-3: Roberto Silva WA -->
-              <div onclick="selectChat(3)" id="chat-3" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <div style="position:relative;"><div class="avatar" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">RS</div><div style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#25d366;border:2px solid var(--bg2);"></div></div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:600;">Roberto Silva</span><span style="font-size:10px;color:var(--muted);">1 h</span></div>
-                    <p style="font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">Perfecto, ¿cuándo puedo pasar a verlo?</p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;"><span class="badge badge-green" style="font-size:9px;padding:1px 5px;">Abierta</span></div>
-                  </div>
-                </div>
-              </div>
-              <!-- chat-4: Sofía Hernández WA CLOSED -->
-              <div onclick="selectChat(4)" id="chat-4" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <div style="position:relative;"><div class="avatar" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">SH</div><div style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#25d366;border:2px solid var(--bg2);"></div></div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:600;">Sofía Hernández</span><span style="font-size:10px;color:var(--muted);">5 h</span></div>
-                    <p style="font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">Muchas gracias, ya recibí mi pedido.</p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;"><span class="badge badge-gray" style="font-size:9px;padding:1px 5px;">Cerrada</span></div>
-                  </div>
-                </div>
-              </div>
-              <!-- chat-5: Miguel Torres IG -->
-              <div onclick="selectChat(5)" id="chat-5" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <div style="position:relative;"><div class="avatar" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);">MT</div><div style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#e1306c;border:2px solid var(--bg2);"></div></div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:700;">Miguel Torres</span><span style="font-size:10px;color:var(--muted);">2 h</span></div>
-                    <p style="font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">¿Hacen envíos a Guadalajara?</p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;"><span class="badge badge-green" style="font-size:9px;padding:1px 5px;">Abierta</span><span style="background:#3b82f6;color:white;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;">3</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Chat View -->
-          <div style="flex:1;display:flex;flex-direction:column;">
-            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg2);">
-              <div style="position:relative;">
-                <div class="avatar">MG</div>
-                <div style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:#25d366;border:2px solid var(--bg2);"></div>
-              </div>
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:700;">María González</div>
-                <div style="font-size:11px;color:var(--muted);">WhatsApp · +52 55 1234 5678</div>
-              </div>
-              <span class="badge badge-green" style="font-size:10px;">Abierta</span>
-              <button class="btn btn-outline" style="height:30px;font-size:11px;gap:4px;">
-                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
-                Asignar
-              </button>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;" class="scrollbar-thin">
-              <div style="display:flex;gap:8px;"><div class="avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;">MG</div><div><div style="font-size:10px;color:var(--muted);margin-bottom:3px;">María González</div><div class="chat-bubble-in">Hola, buenos días! Vi su anuncio en Facebook.</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">10:40 AM</div></div></div>
-              <div style="display:flex;justify-content:flex-end;"><div><div class="chat-bubble-out">¡Hola María! Buenos días 😊 Con gusto le ayudo. ¿En qué producto está interesada?</div><div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px;">10:42 AM ✓✓</div></div></div>
-              <div style="display:flex;gap:8px;"><div class="avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;">MG</div><div><div class="chat-bubble-in">Estoy interesada en el sistema de cámaras. ¿Tienen paquetes?</div></div></div>
-              <div style="display:flex;justify-content:flex-end;"><div><div class="chat-bubble-out">¡Claro! Tenemos 3 paquetes:<br>• Básico: 4 cámaras HD + DVR desde <strong>$4,500</strong><br>• Profesional: 8 cámaras + NVR IP desde <strong>$8,900</strong><br>• Premium: 16 cámaras 4K desde <strong>$15,000</strong><br>¿Le envío más detalles?</div><div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px;">10:48 AM ✓✓</div></div></div>
-              <div style="display:flex;"><div class="chat-bubble-note">📝 <strong>Nota interna:</strong> Cliente muy interesada en paquete profesional. Enviar catálogo completo.</div></div>
-              <div style="display:flex;gap:8px;"><div class="avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;">MG</div><div><div class="chat-bubble-in">Hola, ¿me pueden dar información sobre los precios?</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">Hace 3 min</div></div></div>
-            </div>
-            <div style="padding:12px 14px;border-top:1px solid var(--border);background:var(--bg2);">
-              <div style="display:flex;gap:4px;margin-bottom:8px;">
-                <button style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--primary);color:white;border:none;cursor:pointer;">💬 Responder</button>
-                <button style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);cursor:pointer;">📝 Nota interna</button>
-              </div>
-              <div style="display:flex;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:8px 10px;">
-                <input style="flex:1;background:none;border:none;color:var(--text);font-size:13px;outline:none;" placeholder="Escribe un mensaje... (Enter para enviar)">
-                <button style="padding:0 8px;background:var(--primary);border:none;border-radius:8px;cursor:pointer;">
-                  <svg width="14" height="14" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          <!-- Customer Info Panel -->
-          <div style="width:220px;border-left:1px solid var(--border);padding:16px;overflow-y:auto;background:var(--bg2);" class="scrollbar-thin">
-            <div style="text-align:center;padding-bottom:16px;border-bottom:1px solid var(--border);">
-              <div class="avatar" style="width:48px;height:48px;font-size:16px;margin:0 auto 8px;">MG</div>
-              <div style="font-size:13px;font-weight:700;">María González</div>
-              <div style="font-size:11px;color:var(--muted);">+52 55 1234 5678</div>
-              <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
-                <span class="badge badge-green" style="font-size:9px;">WhatsApp</span>
-                <span class="badge badge-blue" style="font-size:9px;">Meta Ads</span>
-              </div>
-            </div>
-            <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Asignado a</div>
-              <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border-radius:8px;padding:6px 8px;">
-                <div class="avatar" style="width:22px;height:22px;font-size:9px;">JP</div>
-                <span style="font-size:12px;">Juan Pérez</span>
-              </div>
-            </div>
-            <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Actividad</div>
-              <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;"><span style="color:var(--muted);">Conversaciones</span><span style="font-weight:700;">3</span></div>
-              <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;"><span style="color:var(--muted);">Cotizaciones</span><span style="font-weight:700;">1</span></div>
-              <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;"><span style="color:var(--muted);">Compras</span><span style="font-weight:700;">0</span></div>
-            </div>
-            <div style="padding:12px 0;">
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Etiquetas</div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                <span class="badge badge-blue" style="font-size:9px;">#Nuevo lead</span>
-                <span class="badge badge-yellow" style="font-size:9px;">#Interesado</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── KANBAN SECTION ─── -->
-      <div id="section-kanban" class="section fade-in" style="margin:-24px;flex-direction:column;height:calc(100vh - 56px);">
-        <div style="padding:20px 24px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div><h1 style="font-size:20px;font-weight:800;margin:0;">Embudo de Ventas</h1><p style="color:var(--muted);font-size:12px;margin:3px 0 0;">Arrastra las tarjetas para mover leads entre etapas</p></div>
-            <button class="btn btn-primary" style="font-size:12px;"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Lead</button>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;"><span style="font-size:18px;font-weight:800;color:#3b82f6;">9</span><span style="font-size:11px;color:var(--muted);">Leads activos</span></div>
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;"><span style="font-size:18px;font-weight:800;color:#10b981;">$89,800</span><span style="font-size:11px;color:var(--muted);">Valor pipeline</span></div>
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;"><span style="font-size:18px;font-weight:800;color:#34d399;">$32,500</span><span style="font-size:11px;color:var(--muted);">Cerrado mes</span></div>
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;"><span style="font-size:18px;font-weight:800;color:#8b5cf6;">15%</span><span style="font-size:11px;color:var(--muted);">Conversión</span></div>
-          </div>
-        </div>
-        <div style="flex:1;overflow-x:auto;overflow-y:hidden;padding:16px 24px;" class="scrollbar-thin">
-          <div style="display:flex;gap:12px;height:100%;">
-            <!-- Col: Nuevo Lead -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Nuevo Lead</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">3</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$19,400</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">MG</div><span style="font-size:12px;font-weight:600;flex:1;">María González</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$8,900</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-blue" style="font-size:9px;">Meta Ads</span><span style="font-size:10px;color:var(--muted);">hace 2h</span></div></div>
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">MT</div><span style="font-size:12px;font-weight:600;flex:1;">Miguel Torres</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$4,500</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-pink" style="font-size:9px;">Instagram</span><span style="font-size:10px;color:var(--muted);">hace 4h</span></div></div>
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">VC</div><span style="font-size:12px;font-weight:600;flex:1;">Valentina Cruz</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$6,000</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-gray" style="font-size:9px;">Web</span><span style="font-size:10px;color:var(--muted);">hace 6h</span></div></div>
-                <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--muted);margin:4px;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">+ Agregar lead</div>
-              </div>
-            </div>
-            <!-- Col: Contactado -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#06b6d4;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Contactado</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">2</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$16,500</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">CR</div><span style="font-size:12px;font-weight:600;flex:1;">Carlos Rodríguez</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$12,000</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-pink" style="font-size:9px;">Instagram</span><span style="font-size:10px;color:var(--muted);">hace 1h</span></div></div>
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">LM</div><span style="font-size:12px;font-weight:600;flex:1;">Laura Martínez</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$4,500</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-green" style="font-size:9px;">WhatsApp</span><span style="font-size:10px;color:var(--muted);">hace 3h</span></div></div>
-                <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--muted);margin:4px;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">+ Agregar lead</div>
-              </div>
-            </div>
-            <!-- Col: Cotizado -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Cotizado</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">2</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$23,900</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">FL</div><span style="font-size:12px;font-weight:600;flex:1;">Fernando López</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$15,000</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-blue" style="font-size:9px;">Meta Ads</span><span style="font-size:10px;color:var(--muted);">hace 5h</span></div></div>
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">PJ</div><span style="font-size:12px;font-weight:600;flex:1;">Patricia Jiménez</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$8,900</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-green" style="font-size:9px;">WhatsApp</span><span style="font-size:10px;color:var(--muted);">hace 8h</span></div></div>
-                <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--muted);margin:4px;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">+ Agregar lead</div>
-              </div>
-            </div>
-            <!-- Col: Negociación -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#f97316;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Negociación</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">1</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$9,500</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">RS</div><span style="font-size:12px;font-weight:600;flex:1;">Roberto Silva</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$9,500</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-yellow" style="font-size:9px;">Referido</span><span style="font-size:10px;color:var(--muted);">hace 1d</span></div></div>
-                <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--muted);margin:4px;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">+ Agregar lead</div>
-              </div>
-            </div>
-            <!-- Col: Pago Pendiente -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#8b5cf6;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Pago Pendiente</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">1</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$4,500</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">AR</div><span style="font-size:12px;font-weight:600;flex:1;">Alejandro Ruiz</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$4,500</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-green" style="font-size:9px;">WhatsApp</span><span style="font-size:10px;color:var(--muted);">hace 2h</span></div></div>
-                <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--muted);margin:4px;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">+ Agregar lead</div>
-              </div>
-            </div>
-            <!-- Col: Vendido -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Vendido</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">2</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$20,900</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">IC</div><span style="font-size:12px;font-weight:600;flex:1;">Isabel Castro</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$12,000</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-blue" style="font-size:9px;">Meta Ads</span><span style="font-size:10px;color:var(--muted);">ayer</span></div></div>
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">EV</div><span style="font-size:12px;font-weight:600;flex:1;">Eduardo Vargas</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$8,900</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-yellow" style="font-size:9px;">Referido</span><span style="font-size:10px;color:var(--muted);">ayer</span></div></div>
-                <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--muted);margin:4px;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">+ Agregar lead</div>
-              </div>
-            </div>
-            <!-- Col: Perdido -->
-            <div class="kanban-col">
-              <div style="padding:12px 12px 8px;flex-shrink:0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div><span style="font-size:12px;font-weight:700;">Perdido</span><span style="background:var(--bg3);color:var(--muted);font-size:10px;font-weight:700;padding:0 5px;border-radius:20px;">1</span></div><div style="font-size:11px;color:var(--muted);margin-left:14px;">$4,500</div></div>
-              <div style="flex:1;overflow-y:auto;padding:6px;" class="scrollbar-thin">
-                <div class="kanban-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;">GS</div><span style="font-size:12px;font-weight:600;flex:1;">Gabriela Soto</span></div><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;">$4,500</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge badge-pink" style="font-size:9px;">Instagram</span><span style="font-size:10px;color:var(--muted);">hace 3d</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── CUSTOMERS SECTION ─── -->
-      <div id="section-customers" class="section fade-in">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-          <div><h1 style="font-size:20px;font-weight:800;margin:0;">Clientes</h1><p style="color:var(--muted);font-size:12px;margin:3px 0 0;">156 clientes registrados</p></div>
-          <button class="btn btn-primary" style="font-size:12px;"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Cliente</button>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-          <input class="input" placeholder="🔍 Buscar cliente..." style="flex:1;max-width:280px;height:34px;">
-          <select class="input" style="width:auto;height:34px;cursor:pointer;"><option>Todos los canales</option><option>WhatsApp</option><option>Instagram</option><option>Meta Ads</option></select>
-        </div>
-        <div class="card" style="padding:0;overflow:hidden;">
-          <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Cliente</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Contacto</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Fuente</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Vendedor</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Última actividad</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Acciones</span>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="avatar">MG</div><div><div style="font-size:13px;font-weight:600;">María González</div><div style="font-size:11px;color:var(--muted);">maria@gmail.com</div></div></div>
-            <div><div style="font-size:12px;">+52 55 1234</div></div>
-            <div><span class="badge badge-blue" style="font-size:10px;">Meta Ads</span></div>
-            <div style="font-size:12px;color:var(--muted);">Juan P.</div>
-            <div style="font-size:11px;color:var(--muted);">hace 3 min</div>
-            <div style="display:flex;gap:4px;"><button class="btn btn-outline" style="height:26px;padding:0 8px;font-size:11px;">Ver</button><button style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:6px;padding:0 8px;height:26px;font-size:11px;cursor:pointer;">WA</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="avatar">CR</div><div><div style="font-size:13px;font-weight:600;">Carlos Rodríguez</div><div style="font-size:11px;color:var(--muted);">carlos@email.mx</div></div></div>
-            <div><div style="font-size:12px;">+52 55 9876</div></div>
-            <div><span class="badge badge-pink" style="font-size:10px;">Instagram</span></div>
-            <div style="font-size:12px;color:var(--muted);">Ana G.</div>
-            <div style="font-size:11px;color:var(--muted);">hace 15 min</div>
-            <div style="display:flex;gap:4px;"><button class="btn btn-outline" style="height:26px;padding:0 8px;font-size:11px;">Ver</button><button style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:6px;padding:0 8px;height:26px;font-size:11px;cursor:pointer;">WA</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="avatar">LM</div><div><div style="font-size:13px;font-weight:600;">Laura Martínez</div><div style="font-size:11px;color:var(--muted);">laura@hotmail.com</div></div></div>
-            <div><div style="font-size:12px;">+52 55 4567</div></div>
-            <div><span class="badge badge-green" style="font-size:10px;">WhatsApp</span></div>
-            <div style="font-size:12px;color:var(--muted);">Sin asig.</div>
-            <div style="font-size:11px;color:var(--muted);">hace 45 min</div>
-            <div style="display:flex;gap:4px;"><button class="btn btn-outline" style="height:26px;padding:0 8px;font-size:11px;">Ver</button><button style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:6px;padding:0 8px;height:26px;font-size:11px;cursor:pointer;">WA</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="avatar">RS</div><div><div style="font-size:13px;font-weight:600;">Roberto Silva</div><div style="font-size:11px;color:var(--muted);">rob.silva@gmail.com</div></div></div>
-            <div><div style="font-size:12px;">+52 55 3210</div></div>
-            <div><span class="badge badge-yellow" style="font-size:10px;">Referido</span></div>
-            <div style="font-size:12px;color:var(--muted);">Juan P.</div>
-            <div style="font-size:11px;color:var(--muted);">hace 1 h</div>
-            <div style="display:flex;gap:4px;"><button class="btn btn-outline" style="height:26px;padding:0 8px;font-size:11px;">Ver</button><button style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:6px;padding:0 8px;height:26px;font-size:11px;cursor:pointer;">WA</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="avatar">SH</div><div><div style="font-size:13px;font-weight:600;">Sofía Hernández</div><div style="font-size:11px;color:var(--muted);">sofia.h@gmail.com</div></div></div>
-            <div><div style="font-size:12px;">+52 55 7890</div></div>
-            <div><span class="badge badge-green" style="font-size:10px;">WhatsApp</span></div>
-            <div style="font-size:12px;color:var(--muted);">Ana G.</div>
-            <div style="font-size:11px;color:var(--muted);">hace 5 h</div>
-            <div style="display:flex;gap:4px;"><button class="btn btn-outline" style="height:26px;padding:0 8px;font-size:11px;">Ver</button><button style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:6px;padding:0 8px;height:26px;font-size:11px;cursor:pointer;">WA</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 0.8fr;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="avatar">FL</div><div><div style="font-size:13px;font-weight:600;">Fernando López</div><div style="font-size:11px;color:var(--muted);">f.lopez@empresa.mx</div></div></div>
-            <div><div style="font-size:12px;">+52 55 2345</div></div>
-            <div><span class="badge badge-blue" style="font-size:10px;">Meta Ads</span></div>
-            <div style="font-size:12px;color:var(--muted);">Juan P.</div>
-            <div style="font-size:11px;color:var(--muted);">hace 2 h</div>
-            <div style="display:flex;gap:4px;"><button class="btn btn-outline" style="height:26px;padding:0 8px;font-size:11px;">Ver</button><button style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:6px;padding:0 8px;height:26px;font-size:11px;cursor:pointer;">WA</button></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── INVENTORY SECTION ─── -->
-      <div id="section-inventory" class="section fade-in">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-          <div><h1 style="font-size:20px;font-weight:800;margin:0;">Inventario</h1><p style="color:var(--muted);font-size:12px;margin:3px 0 0;">Control de stock y movimientos</p></div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);font-size:12px;">+ Entrada</button>
-            <button class="btn" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);font-size:12px;">− Salida</button>
-            <button class="btn btn-outline" style="font-size:12px;">Ajuste</button>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
-          <div class="metric-card"><div style="flex:1;"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total productos</div><div style="font-size:24px;font-weight:800;color:#3b82f6;">12</div></div></div>
-          <div class="metric-card"><div style="flex:1;"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Valor inventario</div><div style="font-size:24px;font-weight:800;color:#10b981;">$198,500</div></div></div>
-          <div class="metric-card"><div style="flex:1;"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Stock bajo</div><div style="font-size:24px;font-weight:800;color:#f59e0b;">2</div></div></div>
-          <div class="metric-card"><div style="flex:1;"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Sin stock</div><div style="font-size:24px;font-weight:800;color:#ef4444;">1</div></div></div>
-        </div>
-        <div class="card" style="padding:0;overflow:hidden;">
-          <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);">
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Producto / SKU</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Categoría</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Stock actual</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Mín.</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Costo</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Acciones</span>
-          </div>
-          <!-- row ok -->
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Kit Cámaras Básico 4CH</div><div style="font-size:10px;color:var(--muted);">CAM-4CH-001</div></div>
-            <span class="badge badge-blue" style="font-size:10px;justify-self:start;">Seguridad</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#34d399;">8</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:40%;background:#10b981;"></div></div></div></div>
-            <span style="font-size:12px;color:var(--muted);">3</span><span style="font-size:12px;font-weight:600;">$2,800</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Kit Cámaras Profesional 8CH</div><div style="font-size:10px;color:var(--muted);">CAM-8CH-002</div></div>
-            <span class="badge badge-blue" style="font-size:10px;justify-self:start;">Seguridad</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#34d399;">5</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:33%;background:#10b981;"></div></div></div></div>
-            <span style="font-size:12px;color:var(--muted);">3</span><span style="font-size:12px;font-weight:600;">$5,200</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <!-- row low -->
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Kit Cámaras Premium 16CH 4K</div><div style="font-size:10px;color:var(--muted);">CAM-16CH-003</div></div>
-            <span class="badge badge-blue" style="font-size:10px;justify-self:start;">Seguridad</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#fbbf24;">2</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:20%;background:#f59e0b;"></div></div><span class="badge badge-yellow" style="font-size:9px;margin-top:2px;">STOCK BAJO</span></div></div>
-            <span style="font-size:12px;color:var(--muted);">2</span><span style="font-size:12px;font-weight:600;">$9,800</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Alarma Residencial Básica</div><div style="font-size:10px;color:var(--muted);">ALA-RES-001</div></div>
-            <span class="badge badge-yellow" style="font-size:10px;justify-self:start;">Alarmas</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#34d399;">12</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:40%;background:#10b981;"></div></div></div></div>
-            <span style="font-size:12px;color:var(--muted);">5</span><span style="font-size:12px;font-weight:600;">$1,800</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Sensor de Movimiento</div><div style="font-size:10px;color:var(--muted);">SEN-MOV-001</div></div>
-            <span class="badge badge-gray" style="font-size:10px;justify-self:start;">Accesorios</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#34d399;">45</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:45%;background:#10b981;"></div></div></div></div>
-            <span style="font-size:12px;color:var(--muted);">10</span><span style="font-size:12px;font-weight:600;">$280</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Cámara IP Exterior 2MP</div><div style="font-size:10px;color:var(--muted);">CAM-IP-001</div></div>
-            <span class="badge badge-blue" style="font-size:10px;justify-self:start;">Seguridad</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#34d399;">18</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:36%;background:#10b981;"></div></div></div></div>
-            <span style="font-size:12px;color:var(--muted);">8</span><span style="font-size:12px;font-weight:600;">$520</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">DVR 8 Canales</div><div style="font-size:10px;color:var(--muted);">DVR-8CH-001</div></div>
-            <span class="badge badge-purple" style="font-size:10px;justify-self:start;">Equipos</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#34d399;">7</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:35%;background:#10b981;"></div></div></div></div>
-            <span style="font-size:12px;color:var(--muted);">3</span><span style="font-size:12px;font-weight:600;">$1,350</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-          <!-- row out -->
-          <div class="table-row" style="grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;">
-            <div><div style="font-size:13px;font-weight:600;">Bracket para Cámara</div><div style="font-size:10px;color:var(--muted);">BRA-CAM-001</div></div>
-            <span class="badge badge-gray" style="font-size:10px;justify-self:start;">Accesorios</span>
-            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;font-weight:800;color:#f87171;">0</span><div><div class="stock-bar-wrap"><div style="height:100%;border-radius:3px;width:0%;background:#ef4444;"></div></div><span class="badge badge-red" style="font-size:9px;margin-top:2px;">SIN STOCK</span></div></div>
-            <span style="font-size:12px;color:var(--muted);">5</span><span style="font-size:12px;font-weight:600;">$85</span>
-            <div style="display:flex;gap:3px;"><button style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">+</button><button style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:0 7px;height:24px;font-size:11px;cursor:pointer;">−</button></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── TECHNICIAN MOBILE PANEL ─── -->
-      <div id="section-technician" class="section fade-in">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-          <div><h1 style="font-size:20px;font-weight:800;margin:0;">Panel Técnico</h1><p style="color:var(--muted);font-size:12px;margin:3px 0 0;">Vista optimizada para móvil — tal como lo ve el técnico</p></div>
-          <span class="badge badge-yellow">📱 Vista Móvil</span>
-        </div>
-        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
-          <!-- Phone mockup -->
-          <div class="tech-phone">
-            <div style="background:linear-gradient(135deg,#1e3a5f,#0f172a);padding:20px 16px 16px;color:white;">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <div class="avatar" style="width:42px;height:42px;font-size:14px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);">CT</div>
-                <div>
-                  <div style="font-size:15px;font-weight:700;">Carlos Técnico</div>
-                  <div style="font-size:11px;opacity:0.7;">Panel Técnico</div>
-                </div>
-                <div style="margin-left:auto;text-align:right;">
-                  <div style="font-size:10px;opacity:0.7;">Hoy</div>
-                  <div style="font-size:11px;font-weight:600;">Mar 10 Jun</div>
-                </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;">
-                <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:8px 4px;"><div style="font-size:20px;font-weight:800;color:#60a5fa;">2</div><div style="font-size:10px;opacity:0.7;">Servicios</div></div>
-                <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:8px 4px;"><div style="font-size:20px;font-weight:800;color:#34d399;">0</div><div style="font-size:10px;opacity:0.7;">Completados</div></div>
-                <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:8px 4px;"><div style="font-size:20px;font-weight:800;color:#fbbf24;">1</div><div style="font-size:10px;opacity:0.7;">En camino</div></div>
-              </div>
-            </div>
-            <div style="padding:12px;" class="scrollbar-thin" id="tech-jobs">
-              <!-- Job 1 -->
-              <div style="background:var(--bg3);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                  <span style="background:rgba(59,130,246,0.2);color:#60a5fa;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;">⏰ 10:00 AM</span>
-                  <span class="badge badge-blue" style="font-size:10px;">ASIGNADO</span>
-                </div>
-                <div style="font-size:13px;font-weight:700;margin-bottom:2px;">INST-0001</div>
-                <div style="font-size:12px;font-weight:600;margin-bottom:4px;">María González</div>
-                <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">📍 Av. Insurgentes 123, Col. Roma</div>
-                <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">📦 Kit Cámaras Profesional 8CH</div>
-                <button onclick="updateJobStatus(0)" id="job0-btn" style="width:100%;padding:10px;border-radius:10px;font-size:13px;font-weight:700;background:var(--primary);color:white;border:none;cursor:pointer;">🚗 Ir en camino</button>
-              </div>
-              <!-- Job 2 -->
-              <div style="background:var(--bg3);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                  <span style="background:rgba(245,158,11,0.2);color:#fbbf24;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;">⏰ 15:00 PM</span>
-                  <span class="badge badge-yellow" style="font-size:10px;">EN CAMINO</span>
-                </div>
-                <div style="font-size:13px;font-weight:700;margin-bottom:2px;">INST-0006</div>
-                <div style="font-size:12px;font-weight:600;margin-bottom:4px;">Daniela Moreno</div>
-                <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">📍 Blvd. Torres Landa 456, León</div>
-                <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">📦 Kit Cámaras Profesional 8CH</div>
-                <button onclick="updateJobStatus(1)" id="job1-btn" style="width:100%;padding:10px;border-radius:10px;font-size:13px;font-weight:700;background:#f97316;color:white;border:none;cursor:pointer;">📍 Llegué al domicilio</button>
-                <button onclick="showReport()" style="width:100%;padding:8px;border-radius:10px;font-size:12px;font-weight:600;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);cursor:pointer;margin-top:6px;">⚠️ Reportar situación</button>
-              </div>
-              <!-- Report form (hidden) -->
-              <div id="report-form" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:14px;margin-bottom:10px;">
-                <div style="font-size:13px;font-weight:700;color:#fbbf24;margin-bottom:10px;">⚠️ Reportar Situación</div>
-                <select class="input" style="margin-bottom:8px;height:36px;font-size:12px;">
-                  <option>Seleccionar tipo...</option>
-                  <option>Material faltante</option>
-                  <option>Cliente no en casa</option>
-                  <option>Problema técnico</option>
-                  <option>Necesita reprogramar</option>
-                  <option>Otro</option>
-                </select>
-                <textarea class="input" placeholder="Describe la situación..." style="height:70px;resize:none;font-size:12px;margin-bottom:8px;"></textarea>
-                <div style="display:flex;gap:6px;margin-bottom:8px;">
-                  <div style="flex:1;aspect-ratio:1;background:var(--bg3);border:1px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">📷</div>
-                  <div style="flex:1;aspect-ratio:1;background:var(--bg3);border:1px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">📷</div>
-                  <div style="flex:1;aspect-ratio:1;background:var(--bg3);border:1px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">📷</div>
-                </div>
-                <button onclick="submitReport()" style="width:100%;padding:10px;border-radius:10px;font-size:13px;font-weight:700;background:#f59e0b;color:var(--bg);border:none;cursor:pointer;">Enviar reporte al supervisor</button>
-              </div>
-            </div>
-            <!-- Bottom nav simulation -->
-            <div style="border-top:1px solid var(--border);display:flex;background:var(--bg2);padding:8px 0;">
-              <div style="flex:1;text-align:center;cursor:pointer;padding:4px 0;"><div style="font-size:18px;">🏠</div><div style="font-size:9px;color:var(--muted);">Inicio</div></div>
-              <div style="flex:1;text-align:center;cursor:pointer;padding:4px 0;"><div style="font-size:18px;">📋</div><div style="font-size:9px;color:#3b82f6;">Servicios</div></div>
-              <div style="flex:1;text-align:center;cursor:pointer;padding:4px 0;"><div style="font-size:18px;">📍</div><div style="font-size:9px;color:var(--muted);">Mapa</div></div>
-              <div style="flex:1;text-align:center;cursor:pointer;padding:4px 0;"><div style="font-size:18px;">👤</div><div style="font-size:9px;color:var(--muted);">Perfil</div></div>
-            </div>
-          </div>
-          <!-- Info panel -->
-          <div style="flex:1;min-width:280px;">
-            <div class="card" style="margin-bottom:14px;">
-              <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;">¿Cómo funciona el Panel Técnico?</h3>
-              <div>
-                <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;"><span style="font-size:18px;flex-shrink:0;">🚗</span><p style="font-size:13px;color:var(--muted);margin:0;">El técnico abre esta vista desde su celular al iniciar el día</p></div>
-                <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;"><span style="font-size:18px;flex-shrink:0;">📋</span><p style="font-size:13px;color:var(--muted);margin:0;">Ve sus servicios del día con dirección, hora y producto a instalar</p></div>
-                <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;"><span style="font-size:18px;flex-shrink:0;">✅</span><p style="font-size:13px;color:var(--muted);margin:0;">Actualiza el estado con un botón: En camino → Llegué → Completada</p></div>
-                <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;"><span style="font-size:18px;flex-shrink:0;">⚠️</span><p style="font-size:13px;color:var(--muted);margin:0;">Puede reportar cualquier situación con fotos y descripción</p></div>
-                <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;"><span style="font-size:18px;flex-shrink:0;">📡</span><p style="font-size:13px;color:var(--muted);margin:0;">El supervisor ve los cambios en tiempo real en el panel principal</p></div>
-              </div>
-            </div>
-            <div class="card">
-              <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;">Estados de instalación</h3>
-              <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);"><span class="badge badge-blue" style="font-size:10px;min-width:80px;justify-content:center;">ASIGNADO</span><span style="font-size:12px;color:var(--muted);">El técnico fue asignado al servicio</span></div>
-              <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);"><span class="badge badge-yellow" style="font-size:10px;min-width:80px;justify-content:center;">EN CAMINO</span><span style="font-size:12px;color:var(--muted);">El técnico salió hacia el domicilio</span></div>
-              <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);"><span style="background:rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.3);font-size:10px;min-width:80px;justify-content:center;display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;">EN PROCESO</span><span style="font-size:12px;color:var(--muted);">El técnico llegó y está trabajando</span></div>
-              <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);"><span class="badge badge-green" style="font-size:10px;min-width:80px;justify-content:center;">COMPLETADO</span><span style="font-size:12px;color:var(--muted);">Instalación terminada y firmada</span></div>
-              <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);"><span class="badge badge-red" style="font-size:10px;min-width:80px;justify-content:center;">CANCELADO</span><span style="font-size:12px;color:var(--muted);">Cancelado por cliente o técnico</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ─── META ADS SECTION ─── -->
-      <div id="section-metaads" class="section fade-in">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-          <div><h1 style="font-size:20px;font-weight:800;margin:0;">Meta Ads</h1><p style="color:var(--muted);font-size:12px;margin:3px 0 0;">Rendimiento de campañas publicitarias</p></div>
-          <div class="demo-banner">⚠️ Datos simulados — conecta Meta API para datos reales</div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Gasto total</div><div style="font-size:26px;font-weight:800;color:#ef4444;">$16,000</div></div></div>
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Alcance</div><div style="font-size:26px;font-weight:800;color:#3b82f6;">162,000</div></div></div>
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Leads</div><div style="font-size:26px;font-weight:800;color:#10b981;">835</div></div></div>
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">ROAS Prom.</div><div style="font-size:26px;font-weight:800;color:#8b5cf6;">3.7×</div></div></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Impresiones</div><div style="font-size:24px;font-weight:800;color:#06b6d4;">1.2M</div></div></div>
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Clics</div><div style="font-size:24px;font-weight:800;color:#f59e0b;">48,200</div></div></div>
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">CTR</div><div style="font-size:24px;font-weight:800;color:#10b981;">4.0%</div></div></div>
-          <div class="metric-card"><div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">CPC</div><div style="font-size:24px;font-weight:800;color:#f97316;">$0.33</div></div></div>
-        </div>
-        <div class="card" style="margin-bottom:16px;">
-          <h3 style="font-size:14px;font-weight:700;margin:0 0 16px;">Campañas activas</h3>
-          <div style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:12px;">
-              <thead><tr style="border-bottom:1px solid var(--border);">
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Campaña</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Estado</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Presupuesto</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Gasto</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Alcance</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Leads</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">CPL</th>
-                <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">ROAS</th>
-              </tr></thead>
-              <tbody>
-                <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:10px 12px;font-weight:600;">Cámaras Seguridad Q4</td>
-                  <td style="padding:10px 12px;"><span class="badge badge-green" style="font-size:10px;">ACTIVE</span></td>
-                  <td style="padding:10px 12px;">$5,000</td><td style="padding:10px 12px;">$4,892</td>
-                  <td style="padding:10px 12px;">45,200</td>
-                  <td style="padding:10px 12px;color:#34d399;">234</td>
-                  <td style="padding:10px 12px;color:#60a5fa;">$20.90</td>
-                  <td style="padding:10px 12px;">3.2×</td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:10px 12px;font-weight:600;">Alarmas Residenciales</td>
-                  <td style="padding:10px 12px;"><span class="badge badge-green" style="font-size:10px;">ACTIVE</span></td>
-                  <td style="padding:10px 12px;">$3,000</td><td style="padding:10px 12px;">$2,756</td>
-                  <td style="padding:10px 12px;">28,100</td>
-                  <td style="padding:10px 12px;color:#34d399;">156</td>
-                  <td style="padding:10px 12px;color:#60a5fa;">$17.67</td>
-                  <td style="padding:10px 12px;">2.8×</td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:10px 12px;font-weight:600;">Black Friday Especial</td>
-                  <td style="padding:10px 12px;"><span class="badge badge-green" style="font-size:10px;">ACTIVE</span></td>
-                  <td style="padding:10px 12px;">$8,000</td><td style="padding:10px 12px;">$7,340</td>
-                  <td style="padding:10px 12px;">89,000</td>
-                  <td style="padding:10px 12px;color:#34d399;">445</td>
-                  <td style="padding:10px 12px;color:#60a5fa;">$16.49</td>
-                  <td style="padding:10px 12px;">4.1×</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="card">
-          <h3 style="font-size:14px;font-weight:700;margin:0 0 16px;">Configurar Meta API</h3>
-          <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:#fbbf24;">
-            ⚠️ Completa estas credenciales para ver datos reales de tus campañas en tiempo real.
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Meta App ID</label><input class="input" placeholder="Ingresa el valor..." style="height:34px;font-size:12px;"></div>
-            <div><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">App Secret</label><input class="input" placeholder="••••••••••••" style="height:34px;font-size:12px;"></div>
-            <div><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Access Token</label><input class="input" placeholder="Ingresa el valor..." style="height:34px;font-size:12px;"></div>
-            <div><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Ad Account ID</label><input class="input" placeholder="act_123456789" style="height:34px;font-size:12px;"></div>
-            <div><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Page ID</label><input class="input" placeholder="Ingresa el valor..." style="height:34px;font-size:12px;"></div>
-            <div><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">WhatsApp Business Account ID</label><input class="input" placeholder="Ingresa el valor..." style="height:34px;font-size:12px;"></div>
-          </div>
-          <button class="btn btn-primary" style="margin-top:14px;font-size:12px;">Guardar credenciales</button>
-        </div>
-      </div>
-
-    </div><!-- end content -->
-  </div><!-- end main -->
-</div><!-- end screen-app -->
+</div>
 
 <script>
-// ─── Charts ───
-window.addEventListener('load', function() {
-  // requestAnimationFrame garantiza que el layout ya calculó dimensiones
-  requestAnimationFrame(function() {
-  const chartDefaults = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-  };
+// ======================================================
+// SEED DATA
+// ======================================================
+var SEED = {
+  company: { name: 'TechSecurity CDMX', logo: null },
+  products: [
+    {id:'p1',name:'Kit Camaras Basico 4CH',sku:'CAM-4CH-001',category:'Seguridad',stock:8,minStock:3,maxStock:20,cost:2800},
+    {id:'p2',name:'Kit Camaras Profesional 8CH',sku:'CAM-8CH-002',category:'Seguridad',stock:5,minStock:3,maxStock:15,cost:5200},
+    {id:'p3',name:'Kit Camaras Premium 16CH 4K',sku:'CAM-16CH-003',category:'Seguridad',stock:2,minStock:2,maxStock:10,cost:9800},
+    {id:'p4',name:'Alarma Residencial Basica',sku:'ALA-RES-001',category:'Alarmas',stock:12,minStock:5,maxStock:30,cost:1800},
+    {id:'p5',name:'Sensor de Movimiento',sku:'SEN-MOV-001',category:'Accesorios',stock:45,minStock:10,maxStock:100,cost:280},
+    {id:'p6',name:'DVR 8 Canales',sku:'DVR-8CH-001',category:'Equipos',stock:7,minStock:3,maxStock:20,cost:1350},
+    {id:'p7',name:'Bracket para Camara',sku:'BRA-CAM-001',category:'Accesorios',stock:0,minStock:5,maxStock:50,cost:85}
+  ],
+  leads: [
+    {id:'l1',name:'Maria Gonzalez',phone:'+52 55 1234 5678',email:'maria@gmail.com',stage:'NUEVO_LEAD',value:8900,source:'Meta Ads',notes:'',created:'2026-06-10',assigned:'Juan P.'},
+    {id:'l2',name:'Miguel Torres',phone:'+52 55 9876 0000',email:'miguel@email.mx',stage:'NUEVO_LEAD',value:4500,source:'Instagram',notes:'',created:'2026-06-09',assigned:''},
+    {id:'l3',name:'Carlos Rodriguez',phone:'+52 55 3333 2222',email:'carlos@gmail.com',stage:'CONTACTADO',value:12000,source:'Instagram',notes:'Muy interesado',created:'2026-06-08',assigned:'Ana G.'},
+    {id:'l4',name:'Fernando Lopez',phone:'+52 55 4444 5555',email:'f.lopez@empresa.mx',stage:'COTIZADO',value:15000,source:'Meta Ads',notes:'Cotizacion enviada',created:'2026-06-07',assigned:'Juan P.'},
+    {id:'l5',name:'Roberto Silva',phone:'+52 55 3210 6789',email:'rob@gmail.com',stage:'NEGOCIACION',value:9500,source:'Referido',notes:'Negociando precio',created:'2026-06-06',assigned:'Juan P.'},
+    {id:'l6',name:'Alejandro Ruiz',phone:'+52 55 5555 4444',email:'alex@gmail.com',stage:'PAGO_PENDIENTE',value:4500,source:'WhatsApp',notes:'Pago hoy',created:'2026-06-05',assigned:'Ana G.'},
+    {id:'l7',name:'Patricia Mendez',phone:'+52 55 7777 8888',email:'paty@gmail.com',stage:'GANADO',value:18500,source:'Meta Ads',notes:'Cliente ganado',created:'2026-06-01',assigned:'Juan P.'}
+  ],
+  customers: [
+    {id:'c1',name:'Residencial Los Pinos',phone:'+52 55 1111 2222',email:'admin@lospinos.mx',address:'Av. Principal 45, CDMX',type:'Residencial',notes:'Cliente VIP',created:'2026-05-10'},
+    {id:'c2',name:'Empresa Segura SA',phone:'+52 55 3333 4444',email:'it@empresasegura.mx',address:'Insurgentes Sur 1200, CDMX',type:'Empresarial',notes:'Contrato anual',created:'2026-05-15'},
+    {id:'c3',name:'Jose Martinez',phone:'+52 55 5555 6666',email:'jose@gmail.com',address:'Calle 23 #45, Naucalpan',type:'Residencial',notes:'',created:'2026-05-20'},
+    {id:'c4',name:'Plaza Comercial Norte',phone:'+52 55 7777 8888',email:'gerencia@plazanorte.mx',address:'Blvd. Norte 890, CDMX',type:'Comercial',notes:'8 camaras instaladas',created:'2026-05-25'},
+    {id:'c5',name:'Ana Gutierrez',phone:'+52 55 9999 0000',email:'ana.g@hotmail.com',address:'Col. Roma Norte 67',type:'Residencial',notes:'',created:'2026-06-01'}
+  ],
+  conversations: [
+    {id:'cv1',name:'Laura Sanchez',phone:'+52 55 2222 3333',channel:'WhatsApp',status:'open',unread:2,messages:[
+      {id:'m1',text:'Hola! Vi su anuncio en Facebook sobre camaras',dir:'in',time:'09:15'},
+      {id:'m2',text:'Buenos dias Laura! Con gusto le informo. Tenemos kits desde $2,800',dir:'out',time:'09:18',status:'Leido'},
+      {id:'m3',text:'Que incluye el kit basico?',dir:'in',time:'09:20'},
+      {id:'m4',text:'El kit basico 4CH incluye: 4 camaras HD, DVR, cables y fuente de poder',dir:'out',time:'09:22',status:'Leido'},
+      {id:'m5',text:'Perfecto! Podrian venir a cotizar mi casa?',dir:'in',time:'09:45'},
+      {id:'m6',text:'Cuando nos conviene visitarla?',dir:'in',time:'09:46'}
+    ]},
+    {id:'cv2',name:'Diego Reyes',phone:'+52 55 4444 5555',channel:'Instagram',status:'open',unread:0,messages:[
+      {id:'m7',text:'Necesito camaras para mi negocio',dir:'in',time:'11:30'},
+      {id:'m8',text:'Hola Diego! Cuantas camaras necesitas aproximadamente?',dir:'out',time:'11:35',status:'Leido'},
+      {id:'m9',text:'Unas 6 o 8 creo',dir:'in',time:'11:40'},
+      {id:'m10',text:'Te recomiendo nuestro Kit 8CH Profesional, perfecto para negocios',dir:'out',time:'11:42',status:'Leido'}
+    ]},
+    {id:'cv3',name:'Carmen Vega',phone:'+52 55 6666 7777',channel:'WhatsApp',status:'open',unread:1,messages:[
+      {id:'m11',text:'Buenas tardes, tienen servicio de mantenimiento?',dir:'in',time:'14:00'},
+      {id:'m12',text:'Si! Ofrecemos mantenimiento preventivo y correctivo',dir:'out',time:'14:05',status:'Leido'},
+      {id:'m13',text:'Cuanto cuesta?',dir:'in',time:'14:30'}
+    ]},
+    {id:'cv4',name:'Hector Morales',phone:'+52 55 8888 9999',channel:'Messenger',status:'open',unread:0,messages:[
+      {id:'m14',text:'Quiero alarma para casa',dir:'in',time:'16:00'},
+      {id:'m15',text:'Con mucho gusto! Tenemos alarmas desde $1,800. Le hago una cotizacion?',dir:'out',time:'16:10',status:'Leido'}
+    ]}
+  ],
+  movements: [],
+  installations: [
+    {id:'i1',customer:'Residencial Los Pinos',address:'Av. Principal 45, CDMX',service:'Instalacion Kit 8 Camaras HD',technician:'Carlos M.',date:'2026-06-12',status:'Pendiente',notes:''},
+    {id:'i2',customer:'Empresa Segura SA',address:'Insurgentes Sur 1200, CDMX',service:'Mantenimiento Sistema 16CH',technician:'Luis R.',date:'2026-06-10',status:'En Progreso',notes:'2026-06-10: En sitio, revisando DVR'}
+  ]
+};
 
-  // Revenue Chart
-  new Chart(document.getElementById('revenueChart'), {
-    type: 'line',
-    data: {
-      labels: ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
-      datasets: [{
-        label: 'Ingresos',
-        data: [12500,18200,15800,22000,28500,19300,14200],
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.1)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#3b82f6',
-        pointBorderColor: '#0f172a',
-        pointBorderWidth: 2,
-      },{
-        label: 'Leads',
-        data: [8000,12000,10000,15000,20000,13000,9000],
-        borderColor: '#8b5cf6',
-        backgroundColor: 'rgba(139,92,246,0.05)',
-        fill: false,
-        tension: 0.4,
-        borderDash: [4,4],
-        pointRadius: 3,
-        pointBackgroundColor: '#8b5cf6',
-      }]
-    },
-    options: {
-      ...chartDefaults,
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 11 }, callback: v => '$' + (v/1000).toFixed(0) + 'K' } }
-      },
-      plugins: {
-        ...chartDefaults.plugins,
-        tooltip: {
-          callbacks: { label: ctx => ' $' + ctx.raw.toLocaleString() }
-        }
-      }
-    }
-  });
+// ======================================================
+// STATE
+// ======================================================
+var STATE = null;
 
-  // Channel Pie Chart
-  new Chart(document.getElementById('channelChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['WhatsApp','Instagram','Meta Ads','Referidos','Web'],
-      datasets: [{
-        data: [42,28,18,8,4],
-        backgroundColor: ['#25d366','#e1306c','#1877f2','#f59e0b','#6366f1'],
-        borderColor: '#0f172a',
-        borderWidth: 2,
-        hoverOffset: 6,
-      }]
-    },
-    options: {
-      ...chartDefaults,
-      cutout: '65%',
-      plugins: {
-        legend: {
-          display: true,
-          position: 'bottom',
-          labels: { color: '#94a3b8', font: { size: 10 }, padding: 8, boxWidth: 10 }
-        }
-      }
-    }
-  });
-  }); // end requestAnimationFrame
-});
-
-// ─── Navigation ───
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + (name === 'dashboard' ? 'app' : name === 'login' ? 'login' : 'app')).classList.add('active');
-  if (name !== 'login') {
-    showSection(name);
-  }
+function loadState() {
+  var s = localStorage.getItem('greycrm_v3');
+  STATE = s ? JSON.parse(s) : JSON.parse(JSON.stringify(SEED));
 }
+
+function saveState() {
+  localStorage.setItem('greycrm_v3', JSON.stringify(STATE));
+}
+
+// ======================================================
+// UTILITIES
+// ======================================================
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtN(n) {
+  return Number(n || 0).toLocaleString('es-MX');
+}
+
+function fmtC(n) {
+  return '$' + fmtN(n);
+}
+
+function initials(name) {
+  return (name || '?').split(' ').map(function(w){ return w[0]; }).join('').substr(0, 2).toUpperCase();
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ======================================================
+// TOAST
+// ======================================================
+function toast(msg, type) {
+  type = type || 'success';
+  var colors = {success:'#10b981', error:'#ef4444', warning:'#f59e0b', info:'#3b82f6'};
+  var icons = {success:'OK', error:'X', warning:'!', info:'i'};
+  var el = document.createElement('div');
+  el.style.cssText = 'background:' + (colors[type]||'#10b981') + ';color:white;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);pointer-events:auto;transition:opacity 0.3s;max-width:320px;';
+  el.textContent = msg;
+  var c = document.getElementById('toast-container');
+  c.appendChild(el);
+  setTimeout(function(){ el.style.opacity='0'; setTimeout(function(){ if(el.parentNode) el.remove(); }, 300); }, 3500);
+}
+
+// ======================================================
+// MODAL
+// ======================================================
+function openModal(title, body, footer) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-footer').innerHTML = footer || '';
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+document.getElementById('modal-overlay').addEventListener('click', function(e){ if(e.target === this) closeModal(); });
+
+// ======================================================
+// NAVIGATION
+// ======================================================
+var currentSection = 'dashboard';
 
 function showSection(name) {
-  document.querySelectorAll('.section').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-  const sec = document.getElementById('section-' + name);
+  document.querySelectorAll('.section').forEach(function(s){ s.style.display = 'none'; });
+  var sec = document.getElementById('section-' + name);
   if (sec) {
-    // messages y kanban son contenedores flex
-    if (name === 'messages' || name === 'kanban') {
-      sec.style.display = 'flex';
-    } else {
-      sec.style.display = 'block';
-    }
-    sec.classList.add('active');
-    setTimeout(() => sec.classList.add('fade-in'), 10);
+    sec.style.display = (name === 'messages' || name === 'kanban') ? 'flex' : 'block';
   }
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-  const navMap = {
-    dashboard: 0, messages: 1, kanban: 2, customers: 3, inventory: 4,
-    technician: 7, metaads: 9
+  currentSection = name;
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var ni = document.querySelector('[data-nav="' + name + '"]');
+  if (ni) ni.classList.add('active');
+  var renders = {
+    dashboard: renderDashboard,
+    messages: renderMessages,
+    kanban: renderKanban,
+    customers: renderCustomers,
+    inventory: renderInventory,
+    technician: renderTechnician,
+    metaads: renderMetaAds,
+    settings: renderSettings
   };
-  const navItems = document.querySelectorAll('.nav-item');
-  if (navMap[name] !== undefined && navItems[navMap[name]]) {
-    navItems[navMap[name]].classList.add('active');
-  }
+  if (renders[name]) renders[name]();
 }
 
-function selectChat(idx) {
-  document.querySelectorAll('[id^="chat-"]').forEach((el, i) => {
-    el.style.background = '';
-    el.style.borderLeft = '';
-  });
-  const el = document.getElementById('chat-' + idx);
-  if (el) { el.style.background = 'rgba(59,130,246,0.08)'; el.style.borderLeft = '2px solid #3b82f6'; }
-}
-
-// ─── Technician Panel ───
-const jobStates = [
-  { states: ['ASIGNADO','EN CAMINO','EN PROCESO','COMPLETADO'], current: 0, btns: ['🚗 Ir en camino','📍 Llegué al domicilio','✅ Marcar completada','✅ Completada'], colors: ['#3b82f6','#f97316','#10b981','#475569'] },
-  { states: ['EN CAMINO','EN PROCESO','COMPLETADO'], current: 0, btns: ['📍 Llegué al domicilio','✅ Marcar completada','✅ Completada'], colors: ['#f97316','#10b981','#475569'] },
-];
-
-function updateJobStatus(jobIdx) {
-  const job = jobStates[jobIdx];
-  if (job.current >= job.states.length - 1) return;
-  job.current++;
-  const btn = document.getElementById('job' + jobIdx + '-btn');
-  const nextState = job.states[job.current];
-  if (nextState === 'COMPLETADO') {
-    btn.style.background = '#475569';
-    btn.style.cursor = 'default';
-    btn.textContent = '✅ Instalación completada';
-    btn.disabled = true;
-    // Show celebration
-    const jobs = document.getElementById('tech-jobs');
-    const celebrate = document.createElement('div');
-    celebrate.style.cssText = 'background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(59,130,246,0.2));border:1px solid rgba(16,185,129,0.4);border-radius:14px;padding:16px;text-align:center;margin-bottom:10px;';
-    celebrate.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🎉</div><div style="font-size:14px;font-weight:700;color:#34d399;">¡Servicio completado!</div><div style="font-size:12px;color:var(--muted);margin-top:4px;">Reporte enviado al supervisor</div>';
-    jobs.insertBefore(celebrate, jobs.firstChild);
+// ======================================================
+// SIDEBAR
+// ======================================================
+function renderSidebar() {
+  var logoHTML;
+  if (STATE.company.logo) {
+    logoHTML = '<img src="' + STATE.company.logo + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">';
   } else {
-    btn.textContent = job.btns[job.current];
-    btn.style.background = job.colors[job.current];
+    logoHTML = '<div style="width:36px;height:36px;border-radius:8px;background:#3b82f6;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:16px;">' + esc(STATE.company.name.charAt(0)) + '</div>';
   }
+
+  var navItems = [
+    {id:'dashboard', label:'Dashboard'},
+    {id:'messages', label:'Mensajes'},
+    {id:'kanban', label:'Pipeline'},
+    {id:'customers', label:'Clientes'},
+    {id:'inventory', label:'Inventario'},
+    {id:'technician', label:'Tecnicos'},
+    {id:'metaads', label:'Meta Ads'},
+    {id:'settings', label:'Ajustes'}
+  ];
+
+  var navHTML = '';
+  navItems.forEach(function(item) {
+    var active = currentSection === item.id ? ' active' : '';
+    navHTML += '<div class="nav-item' + active + '" data-nav="' + item.id + '" onclick="showSection(\'' + item.id + '\')">';
+    navHTML += '<span>' + item.label + '</span>';
+    navHTML += '</div>';
+  });
+
+  document.getElementById('sidebar').innerHTML =
+    '<div class="sidebar-header">' +
+      logoHTML +
+      '<div style="margin-left:10px;overflow:hidden;">' +
+        '<div style="font-weight:700;font-size:13px;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(STATE.company.name) + '</div>' +
+        '<div style="font-size:11px;color:#64748b;">CRM Pro</div>' +
+      '</div>' +
+    '</div>' +
+    '<nav style="flex:1;padding:8px 0;overflow-y:auto;">' + navHTML + '</nav>' +
+    '<div style="padding:12px 16px;border-top:1px solid #334155;">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div style="width:32px;height:32px;border-radius:50%;background:#334155;display:flex;align-items:center;justify-content:center;font-size:12px;color:#94a3b8;flex-shrink:0;">AD</div>' +
+        '<div><div style="font-size:12px;font-weight:600;color:#f8fafc;">Admin</div><div style="font-size:10px;color:#64748b;">Administrador</div></div>' +
+      '</div>' +
+    '</div>';
 }
 
-function showReport() {
-  const f = document.getElementById('report-form');
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+// ======================================================
+// DASHBOARD
+// ======================================================
+var revenueChart = null;
+var channelChart = null;
+
+function renderDashboard() {
+  var prods = STATE.products;
+  var leads = STATE.leads;
+  var lowStock = prods.filter(function(p){ return p.stock > 0 && p.stock <= p.minStock; }).length;
+  var outStock = prods.filter(function(p){ return p.stock === 0; }).length;
+  var wonLeads = leads.filter(function(l){ return l.stage === 'GANADO'; });
+  var totalRevenue = wonLeads.reduce(function(s,l){ return s + (l.value||0); }, 0);
+  var pipelineValue = leads.filter(function(l){ return l.stage !== 'GANADO' && l.stage !== 'PERDIDO'; }).reduce(function(s,l){ return s + (l.value||0); }, 0);
+  var alertCount = lowStock + outStock;
+
+  var recentLeads = leads.slice().reverse().slice(0, 5);
+  var alertProds = prods.filter(function(p){ return p.stock <= p.minStock; }).slice(0, 5);
+
+  var leadsHTML = '';
+  recentLeads.forEach(function(l) {
+    leadsHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #334155;">' +
+      '<div><div style="font-size:13px;font-weight:600;color:#f8fafc;">' + esc(l.name) + '</div>' +
+      '<div style="font-size:11px;color:#64748b;">' + esc(l.source) + '</div></div>' +
+      '<div style="text-align:right;"><div style="font-size:13px;font-weight:600;color:#10b981;">' + fmtC(l.value) + '</div>' +
+      '<span style="font-size:10px;background:#334155;padding:2px 6px;border-radius:4px;color:#94a3b8;">' + esc(stageLabel(l.stage)) + '</span></div>' +
+    '</div>';
+  });
+
+  var alertHTML = alertProds.length === 0
+    ? '<div style="color:#64748b;font-size:13px;text-align:center;padding:20px;">Sin alertas de inventario</div>'
+    : '';
+  alertProds.forEach(function(p) {
+    var sc = p.stock === 0 ? '#ef4444' : '#f59e0b';
+    var sl = p.stock === 0 ? 'SIN STOCK' : 'BAJO';
+    alertHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #334155;">' +
+      '<div><div style="font-size:13px;font-weight:600;color:#f8fafc;">' + esc(p.name) + '</div>' +
+      '<div style="font-size:11px;color:#64748b;">Min: ' + p.minStock + '</div></div>' +
+      '<div style="text-align:right;"><div style="font-size:20px;font-weight:700;color:' + sc + ';">' + p.stock + '</div>' +
+      '<div style="font-size:10px;color:' + sc + ';">' + sl + '</div></div>' +
+    '</div>';
+  });
+
+  document.getElementById('section-dashboard').innerHTML =
+    '<div style="padding:24px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<div><h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin:0;">Dashboard</h1>' +
+        '<p style="color:#64748b;margin:4px 0 0;font-size:13px;">Resumen general del negocio</p></div>' +
+        '<div style="color:#64748b;font-size:13px;">' + today() + '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px;">' +
+        kpiCard('Ingresos Ganados', fmtC(totalRevenue), '#10b981', wonLeads.length + ' ventas cerradas') +
+        kpiCard('Pipeline Total', fmtC(pipelineValue), '#3b82f6', leads.filter(function(l){ return l.stage!=='GANADO'&&l.stage!=='PERDIDO';}).length + ' leads activos') +
+        kpiCard('Clientes', STATE.customers.length, '#8b5cf6', 'Base de clientes') +
+        kpiCard('Alertas Stock', alertCount, alertCount > 0 ? '#ef4444' : '#10b981', outStock + ' sin stock') +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;">' +
+        '<div class="card"><div style="font-weight:600;color:#f8fafc;margin-bottom:16px;">Ingresos por Mes</div>' +
+        '<div style="position:relative;height:180px;"><canvas id="revenueChart"></canvas></div></div>' +
+        '<div class="card"><div style="font-weight:600;color:#f8fafc;margin-bottom:16px;">Leads por Canal</div>' +
+        '<div style="position:relative;height:180px;"><canvas id="channelChart"></canvas></div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+        '<div class="card"><div style="font-weight:600;color:#f8fafc;margin-bottom:12px;">Leads Recientes</div>' + leadsHTML +
+        '<button class="btn btn-ghost" style="margin-top:12px;width:100%;font-size:13px;" onclick="showSection(\'kanban\')">Ver Pipeline Completo</button></div>' +
+        '<div class="card"><div style="font-weight:600;color:#f8fafc;margin-bottom:12px;">Alertas Inventario</div>' + alertHTML +
+        '<button class="btn btn-ghost" style="margin-top:12px;width:100%;font-size:13px;" onclick="showSection(\'inventory\')">Ver Inventario</button></div>' +
+      '</div>' +
+    '</div>';
+
+  requestAnimationFrame(function() {
+    if (revenueChart) { revenueChart.destroy(); revenueChart = null; }
+    if (channelChart) { channelChart.destroy(); channelChart = null; }
+
+    var rc = document.getElementById('revenueChart');
+    if (rc) {
+      revenueChart = new Chart(rc, {
+        type: 'line',
+        data: {
+          labels: ['Ene','Feb','Mar','Abr','May','Jun'],
+          datasets: [{
+            label: 'Ingresos',
+            data: [42000,58000,51000,67000,73000, totalRevenue > 0 ? totalRevenue : 85000],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.1)',
+            fill: true, tension: 0.4,
+            pointBackgroundColor: '#3b82f6', pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 11 }, callback: function(v){ return '$'+(v/1000)+'k'; } } }
+          }
+        }
+      });
+    }
+
+    var cc = document.getElementById('channelChart');
+    if (cc) {
+      var channels = {};
+      STATE.leads.forEach(function(l){ channels[l.source] = (channels[l.source]||0) + 1; });
+      channelChart = new Chart(cc, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(channels),
+          datasets: [{ data: Object.values(channels),
+            backgroundColor: ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4'],
+            borderWidth: 0 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 8 } } }
+        }
+      });
+    }
+  });
 }
 
-function submitReport() {
-  const f = document.getElementById('report-form');
-  f.innerHTML = '<div style="text-align:center;padding:10px;"><div style="font-size:20px;margin-bottom:6px;">✅</div><div style="font-size:13px;font-weight:700;color:#34d399;">Reporte enviado al supervisor</div></div>';
+function kpiCard(title, value, color, sub) {
+  return '<div class="card" style="border-left:3px solid ' + color + ';">' +
+    '<div style="font-size:12px;color:#64748b;margin-bottom:6px;">' + title + '</div>' +
+    '<div style="font-size:24px;font-weight:700;color:#f8fafc;">' + value + '</div>' +
+    '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">' + sub + '</div>' +
+  '</div>';
 }
 
-// init
-showScreen('dashboard');
+// ======================================================
+// INVENTORY
+// ======================================================
+var invTab = 'products';
+
+function renderInventory() {
+  var lowStock = STATE.products.filter(function(p){ return p.stock <= p.minStock; }).length;
+
+  document.getElementById('section-inventory').innerHTML =
+    '<div style="padding:24px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<div><h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin:0;">Inventario</h1>' +
+        '<p style="color:#64748b;margin:4px 0 0;font-size:13px;">' + STATE.products.length + ' productos &bull; ' + lowStock + ' con alerta de stock</p></div>' +
+        '<button class="btn btn-primary" onclick="openAddProduct()">+ Agregar Producto</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:20px;">' +
+        '<button class="tab' + (invTab==='products'?' tab-active':'') + '" onclick="switchInvTab(\'products\')">Productos</button>' +
+        '<button class="tab' + (invTab==='movements'?' tab-active':'') + '" onclick="switchInvTab(\'movements\')">Movimientos (' + STATE.movements.length + ')</button>' +
+      '</div>' +
+      '<div id="inv-content"></div>' +
+    '</div>';
+
+  renderInvContent();
+}
+
+function switchInvTab(tab) {
+  invTab = tab;
+  renderInventory();
+}
+
+function renderInvContent() {
+  var el = document.getElementById('inv-content');
+  if (!el) return;
+  invTab === 'products' ? renderProductsTable(el) : renderMovementsTable(el);
+}
+
+function renderProductsTable(el) {
+  var rows = '';
+  STATE.products.forEach(function(p) {
+    var sc = p.stock === 0 ? '#ef4444' : p.stock <= p.minStock ? '#f59e0b' : '#10b981';
+    var sl = p.stock === 0 ? 'SIN STOCK' : p.stock <= p.minStock ? 'BAJO' : 'OK';
+    var slBg = p.stock === 0 ? 'rgba(239,68,68,0.15)' : p.stock <= p.minStock ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)';
+    rows += '<tr>' +
+      '<td><span class="badge" style="background:#334155;color:#94a3b8;font-family:monospace;">' + esc(p.sku) + '</span></td>' +
+      '<td style="font-weight:600;color:#f8fafc;">' + esc(p.name) + '</td>' +
+      '<td><span class="badge" style="background:#1e3a5f;color:#60a5fa;">' + esc(p.category) + '</span></td>' +
+      '<td style="text-align:center;"><span style="font-size:18px;font-weight:700;color:' + sc + ';">' + p.stock + '</span></td>' +
+      '<td style="text-align:center;color:#94a3b8;">' + p.minStock + '</td>' +
+      '<td style="text-align:right;color:#10b981;font-weight:600;">' + fmtC(p.cost) + '</td>' +
+      '<td><span class="badge" style="background:' + slBg + ';color:' + sc + ';">' + sl + '</span></td>' +
+      '<td><div style="display:flex;gap:4px;">' +
+        '<button class="btn btn-sm btn-success" onclick="openStockMove(\'' + p.id + '\',\'in\')" title="Entrada">+</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="openStockMove(\'' + p.id + '\',\'out\')" title="Salida">-</button>' +
+        '<button class="btn btn-sm" style="background:#1e3a5f;" onclick="openEditProduct(\'' + p.id + '\')">Editar</button>' +
+        '<button class="btn btn-sm" style="background:#450a0a;" onclick="deleteProduct(\'' + p.id + '\')">Borrar</button>' +
+      '</div></td>' +
+    '</tr>';
+  });
+
+  el.innerHTML = '<div class="card" style="padding:0;overflow:hidden;">' +
+    '<table class="table"><thead><tr>' +
+    '<th>SKU</th><th>Producto</th><th>Categoria</th><th style="text-align:center;">Stock</th>' +
+    '<th style="text-align:center;">Min</th><th style="text-align:right;">Costo</th><th>Estado</th><th>Acciones</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function renderMovementsTable(el) {
+  var movs = STATE.movements.slice().reverse();
+  var rows = '';
+  if (movs.length === 0) {
+    rows = '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:30px;">Sin movimientos registrados</td></tr>';
+  } else {
+    movs.forEach(function(m) {
+      var prod = STATE.products.find(function(p){ return p.id === m.productId; });
+      var isIn = m.type === 'in';
+      rows += '<tr>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(m.date) + '</td>' +
+        '<td style="font-weight:600;color:#f8fafc;">' + esc(prod ? prod.name : '(eliminado)') + '</td>' +
+        '<td><span class="badge" style="background:' + (isIn?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)') + ';color:' + (isIn?'#10b981':'#ef4444') + ';">' + (isIn?'ENTRADA':'SALIDA') + '</span></td>' +
+        '<td style="text-align:center;font-weight:700;color:' + (isIn?'#10b981':'#ef4444') + ';">' + (isIn?'+':'-') + m.qty + '</td>' +
+        '<td style="color:#94a3b8;">' + esc(m.reason||'-') + '</td>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(m.user||'Admin') + '</td>' +
+      '</tr>';
+    });
+  }
+
+  el.innerHTML = '<div class="card" style="padding:0;overflow:hidden;">' +
+    '<table class="table"><thead><tr>' +
+    '<th>Fecha</th><th>Producto</th><th>Tipo</th><th style="text-align:center;">Cant.</th><th>Motivo</th><th>Usuario</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function openAddProduct() {
+  openModal('Agregar Producto',
+    '<div class="form-grid">' +
+      fld('name','Nombre del Producto','text','','Kit Camaras HD 4CH') +
+      fld('sku','SKU / Codigo','text','','CAM-001') +
+      fld('category','Categoria','text','','Seguridad') +
+      fld('stock','Stock Inicial','number','0','10') +
+      fld('minStock','Stock Minimo','number','2','3') +
+      fld('maxStock','Stock Maximo','number','100','50') +
+      fld('cost','Costo Unitario ($)','number','0','2500') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveNewProduct()">Guardar Producto</button>'
+  );
+}
+
+function saveNewProduct() {
+  var name = gv('name'), sku = gv('sku'), category = gv('category');
+  var stock = parseInt(gv('stock'))||0, minStock = parseInt(gv('minStock'))||0;
+  var maxStock = parseInt(gv('maxStock'))||100, cost = parseFloat(gv('cost'))||0;
+  if (!name) { toast('El nombre es requerido'); return; }
+  if (!sku) { toast('El SKU es requerido'); return; }
+  var prod = {id:uid(), name:name, sku:sku, category:category||'General', stock:stock, minStock:minStock, maxStock:maxStock, cost:cost};
+  STATE.products.push(prod);
+  if (stock > 0) {
+    STATE.movements.push({id:uid(), productId:prod.id, type:'in', qty:stock, reason:'Stock inicial', date:today(), user:'Admin'});
+  }
+  saveState(); closeModal();
+  toast('Producto agregado: ' + name);
+  renderInventory();
+}
+
+function openEditProduct(id) {
+  var p = STATE.products.find(function(x){ return x.id===id; });
+  if (!p) return;
+  openModal('Editar Producto',
+    '<div class="form-grid">' +
+      fldv('name','Nombre del Producto','text',p.name) +
+      fldv('sku','SKU / Codigo','text',p.sku) +
+      fldv('category','Categoria','text',p.category) +
+      fldv('minStock','Stock Minimo','number',p.minStock) +
+      fldv('maxStock','Stock Maximo','number',p.maxStock) +
+      fldv('cost','Costo Unitario ($)','number',p.cost) +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveEditProduct(\'' + id + '\')">Guardar Cambios</button>'
+  );
+}
+
+function saveEditProduct(id) {
+  var p = STATE.products.find(function(x){ return x.id===id; });
+  if (!p) return;
+  p.name = gv('name')||p.name; p.sku = gv('sku')||p.sku;
+  p.category = gv('category')||p.category;
+  p.minStock = parseInt(gv('minStock'))||p.minStock;
+  p.maxStock = parseInt(gv('maxStock'))||p.maxStock;
+  p.cost = parseFloat(gv('cost'))||p.cost;
+  saveState(); closeModal(); toast('Producto actualizado'); renderInventory();
+}
+
+function openStockMove(id, type) {
+  var p = STATE.products.find(function(x){ return x.id===id; });
+  if (!p) return;
+  var title = type === 'in' ? 'Entrada de Stock' : 'Salida de Stock';
+  openModal(title + ' — ' + esc(p.name),
+    '<div style="background:#334155;border-radius:8px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-around;">' +
+      '<div style="text-align:center;"><div style="font-size:11px;color:#94a3b8;">Actual</div><div style="font-size:22px;font-weight:700;color:#f8fafc;">' + p.stock + '</div></div>' +
+      '<div style="text-align:center;"><div style="font-size:11px;color:#94a3b8;">Minimo</div><div style="font-size:22px;font-weight:700;color:#f59e0b;">' + p.minStock + '</div></div>' +
+      '<div style="text-align:center;"><div style="font-size:11px;color:#94a3b8;">Maximo</div><div style="font-size:22px;font-weight:700;color:#10b981;">' + p.maxStock + '</div></div>' +
+    '</div>' +
+    fld('qty','Cantidad','number','1','5') +
+    '<div style="margin-top:12px;">' + fld('reason','Motivo','text','',type==='in'?'Compra a proveedor':'Venta / Instalacion') + '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn ' + (type==='in'?'btn-success':'btn-danger') + '" onclick="saveStockMove(\'' + id + '\',\'' + type + '\')">' + title + '</button>'
+  );
+}
+
+function saveStockMove(id, type) {
+  var p = STATE.products.find(function(x){ return x.id===id; });
+  if (!p) return;
+  var qty = parseInt(gv('qty'))||0;
+  var reason = gv('reason');
+  if (qty <= 0) { toast('La cantidad debe ser mayor a 0'); return; }
+  if (type === 'out' && qty > p.stock) { toast('Stock insuficiente (actual: ' + p.stock + ')'); return; }
+  p.stock = type === 'in' ? p.stock + qty : p.stock - qty;
+  STATE.movements.push({id:uid(), productId:id, type:type, qty:qty, reason:reason||'-', date:today(), user:'Admin'});
+  saveState(); closeModal();
+  toast((type==='in'?'+':'-') + qty + ' unidades en ' + p.name);
+  renderInventory();
+}
+
+function deleteProduct(id) {
+  var p = STATE.products.find(function(x){ return x.id===id; });
+  if (!p) return;
+  openModal('Eliminar Producto',
+    '<div style="text-align:center;padding:20px;">' +
+      '<div style="font-size:44px;margin-bottom:12px;">?</div>' +
+      '<div style="color:#f8fafc;font-weight:600;margin-bottom:8px;">Eliminar ' + esc(p.name) + '?</div>' +
+      '<div style="color:#94a3b8;font-size:13px;">Esta accion no se puede deshacer.</div>' +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-danger" onclick="confirmDeleteProduct(\'' + id + '\')">Si, Eliminar</button>'
+  );
+}
+
+function confirmDeleteProduct(id) {
+  var p = STATE.products.find(function(x){ return x.id===id; });
+  STATE.products = STATE.products.filter(function(x){ return x.id!==id; });
+  saveState(); closeModal();
+  toast('Producto eliminado: ' + (p?p.name:''));
+  renderInventory();
+}
+
+// ======================================================
+// CUSTOMERS
+// ======================================================
+var customerSearch = '';
+
+function renderCustomers() {
+  var q = customerSearch.toLowerCase();
+  var filtered = STATE.customers.filter(function(c) {
+    if (!q) return true;
+    return c.name.toLowerCase().indexOf(q) >= 0 ||
+      (c.phone||'').indexOf(q) >= 0 ||
+      (c.email||'').toLowerCase().indexOf(q) >= 0;
+  });
+
+  var cardsHTML = '';
+  filtered.forEach(function(c) {
+    cardsHTML += '<div class="card hover-card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:42px;height:42px;border-radius:50%;background:#1e3a5f;display:flex;align-items:center;justify-content:center;font-weight:700;color:#60a5fa;flex-shrink:0;">' + initials(c.name) + '</div>' +
+          '<div><div style="font-weight:600;color:#f8fafc;">' + esc(c.name) + '</div>' +
+          '<div style="font-size:12px;color:#64748b;">' + esc(c.type||'Cliente') + '</div></div>' +
+        '</div>' +
+        '<span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;">Activo</span>' +
+      '</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:4px;">Tel: ' + esc(c.phone||'-') + '</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:4px;">Email: ' + esc(c.email||'-') + '</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">Dir: ' + esc(c.address||'-') + '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="btn btn-sm btn-primary" style="flex:1;" onclick="openEditCustomer(\'' + c.id + '\')">Editar</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="deleteCustomer(\'' + c.id + '\')">Borrar</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  document.getElementById('section-customers').innerHTML =
+    '<div style="padding:24px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<div><h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin:0;">Clientes</h1>' +
+        '<p style="color:#64748b;margin:4px 0 0;font-size:13px;">' + STATE.customers.length + ' clientes registrados</p></div>' +
+        '<button class="btn btn-primary" onclick="openAddCustomer()">+ Agregar Cliente</button>' +
+      '</div>' +
+      '<div class="card" style="padding:10px 14px;margin-bottom:16px;">' +
+        '<input type="text" class="input" placeholder="Buscar por nombre, telefono o email..." value="' + esc(customerSearch) + '" oninput="customerSearch=this.value;renderCustomers()" style="border:none;background:transparent;outline:none;">' +
+      '</div>' +
+      (filtered.length === 0
+        ? '<div class="card" style="text-align:center;padding:40px;color:#64748b;">Sin resultados</div>'
+        : '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">' + cardsHTML + '</div>'
+      ) +
+    '</div>';
+}
+
+function openAddCustomer() {
+  openModal('Nuevo Cliente',
+    '<div class="form-grid">' +
+      fld('name','Nombre Completo','text','','Juan Perez') +
+      fld('phone','Telefono','tel','','+52 55 1234 5678') +
+      fld('email','Correo Electronico','email','','juan@email.com') +
+      fld('address','Direccion','text','','Calle 123, CDMX') +
+      fld('type','Tipo','text','Residencial','Residencial / Empresarial') +
+      fld('notes','Notas','text','','Observaciones...') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveNewCustomer()">Guardar Cliente</button>'
+  );
+}
+
+function saveNewCustomer() {
+  var name = gv('name');
+  if (!name) { toast('El nombre es requerido'); return; }
+  STATE.customers.push({
+    id:uid(), name:name, phone:gv('phone'), email:gv('email'),
+    address:gv('address'), type:gv('type')||'Residencial',
+    notes:gv('notes'), created:today()
+  });
+  saveState(); closeModal(); toast('Cliente agregado: ' + name); renderCustomers();
+}
+
+function openEditCustomer(id) {
+  var c = STATE.customers.find(function(x){ return x.id===id; });
+  if (!c) return;
+  openModal('Editar Cliente',
+    '<div class="form-grid">' +
+      fldv('name','Nombre Completo','text',c.name) +
+      fldv('phone','Telefono','tel',c.phone||'') +
+      fldv('email','Correo','email',c.email||'') +
+      fldv('address','Direccion','text',c.address||'') +
+      fldv('type','Tipo','text',c.type||'Residencial') +
+      fldv('notes','Notas','text',c.notes||'') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveEditCustomer(\'' + id + '\')">Guardar Cambios</button>'
+  );
+}
+
+function saveEditCustomer(id) {
+  var c = STATE.customers.find(function(x){ return x.id===id; });
+  if (!c) return;
+  c.name = gv('name')||c.name; c.phone = gv('phone');
+  c.email = gv('email'); c.address = gv('address');
+  c.type = gv('type'); c.notes = gv('notes');
+  saveState(); closeModal(); toast('Cliente actualizado'); renderCustomers();
+}
+
+function deleteCustomer(id) {
+  var c = STATE.customers.find(function(x){ return x.id===id; });
+  if (!c) return;
+  openModal('Eliminar Cliente',
+    '<div style="text-align:center;padding:20px;">' +
+      '<div style="color:#f8fafc;font-weight:600;margin-bottom:8px;">Eliminar a ' + esc(c.name) + '?</div>' +
+      '<div style="color:#94a3b8;font-size:13px;">Esta accion no se puede deshacer.</div>' +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-danger" onclick="confirmDeleteCustomer(\'' + id + '\')">Si, Eliminar</button>'
+  );
+}
+
+function confirmDeleteCustomer(id) {
+  STATE.customers = STATE.customers.filter(function(x){ return x.id!==id; });
+  saveState(); closeModal(); toast('Cliente eliminado'); renderCustomers();
+}
+
+// ======================================================
+// KANBAN / PIPELINE
+// ======================================================
+var STAGES = ['NUEVO_LEAD','CONTACTADO','COTIZADO','NEGOCIACION','PAGO_PENDIENTE','GANADO','PERDIDO'];
+var STAGE_LABELS = {
+  NUEVO_LEAD:'Nuevo Lead', CONTACTADO:'Contactado', COTIZADO:'Cotizado',
+  NEGOCIACION:'Negociacion', PAGO_PENDIENTE:'Pago Pendiente',
+  GANADO:'Ganado', PERDIDO:'Perdido'
+};
+
+function stageLabel(s) { return STAGE_LABELS[s] || s; }
+
+function renderKanban() {
+  var activeStages = ['NUEVO_LEAD','CONTACTADO','COTIZADO','NEGOCIACION','PAGO_PENDIENTE'];
+  var cols = '';
+
+  activeStages.forEach(function(stage) {
+    var stageLeads = STATE.leads.filter(function(l){ return l.stage === stage; });
+    var stageTotal = stageLeads.reduce(function(s,l){ return s+(l.value||0); }, 0);
+    var cards = '';
+    stageLeads.forEach(function(l) {
+      cards += '<div class="kanban-card" onclick="openEditLead(\'' + l.id + '\')">' +
+        '<div style="font-weight:600;font-size:13px;color:#f8fafc;margin-bottom:3px;">' + esc(l.name) + '</div>' +
+        '<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">' + esc(l.phone) + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<span style="font-size:13px;font-weight:700;color:#10b981;">' + fmtC(l.value) + '</span>' +
+          '<span class="badge" style="background:#334155;color:#94a3b8;">' + esc(l.source) + '</span>' +
+        '</div>' +
+        (l.assigned ? '<div style="font-size:11px;color:#64748b;margin-top:6px;">Asig: ' + esc(l.assigned) + '</div>' : '') +
+      '</div>';
+    });
+
+    cols += '<div class="kanban-col">' +
+      '<div class="kanban-col-header"><span>' + stageLabel(stage) + '</span>' +
+      '<span class="badge" style="background:#334155;color:#94a3b8;">' + stageLeads.length + '</span></div>' +
+      '<div style="font-size:12px;color:#64748b;margin-bottom:10px;">' + fmtC(stageTotal) + '</div>' +
+      cards +
+    '</div>';
+  });
+
+  document.getElementById('section-kanban').innerHTML =
+    '<div style="display:flex;flex-direction:column;height:100%;overflow:hidden;width:100%;">' +
+      '<div style="padding:24px 24px 0;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">' +
+        '<div><h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin:0;">Pipeline de Ventas</h1>' +
+        '<p style="color:#64748b;margin:4px 0 0;font-size:13px;">' + STATE.leads.filter(function(l){ return l.stage!=='GANADO'&&l.stage!=='PERDIDO'; }).length + ' leads activos</p></div>' +
+        '<button class="btn btn-primary" onclick="openAddLead()">+ Nuevo Lead</button>' +
+      '</div>' +
+      '<div style="padding:24px;overflow-x:auto;flex:1;">' +
+        '<div style="display:flex;gap:14px;min-width:' + (activeStages.length * 240) + 'px;">' + cols + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function openAddLead() {
+  openModal('Nuevo Lead',
+    '<div class="form-grid">' +
+      fld('name','Nombre Completo','text','','Maria Gonzalez') +
+      fld('phone','Telefono / WhatsApp','tel','','+52 55 1234 5678') +
+      fld('email','Email','email','','maria@gmail.com') +
+      fld('value','Valor Estimado ($)','number','0','8900') +
+      fldSel('source','Fuente',['Meta Ads','Instagram','WhatsApp','Referido','Web','Otro'],'') +
+      fld('assigned','Asignado a','text','','Juan P.') +
+      fld('notes','Notas','text','','Comentarios...') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveNewLead()">Crear Lead</button>'
+  );
+}
+
+function saveNewLead() {
+  var name = gv('name');
+  if (!name) { toast('El nombre es requerido'); return; }
+  STATE.leads.push({
+    id:uid(), name:name, phone:gv('phone'), email:gv('email'),
+    value:parseFloat(gv('value'))||0, source:gv('source'),
+    stage:'NUEVO_LEAD', assigned:gv('assigned'),
+    notes:gv('notes'), created:today()
+  });
+  saveState(); closeModal(); toast('Lead creado: ' + name); renderKanban();
+}
+
+function openEditLead(id) {
+  var l = STATE.leads.find(function(x){ return x.id===id; });
+  if (!l) return;
+
+  var stageOpts = '';
+  STAGES.forEach(function(s) {
+    stageOpts += '<option value="' + s + '"' + (l.stage===s?' selected':'') + '>' + esc(stageLabel(s)) + '</option>';
+  });
+
+  openModal('Editar Lead — ' + esc(l.name),
+    '<div class="form-grid">' +
+      fldv('name','Nombre','text',l.name) +
+      fldv('phone','Telefono','tel',l.phone||'') +
+      fldv('email','Email','email',l.email||'') +
+      fldv('value','Valor ($)','number',l.value||0) +
+      '<div><label class="form-label">Etapa</label><select id="f-stage" class="input">' + stageOpts + '</select></div>' +
+      fldSel('source','Fuente',['Meta Ads','Instagram','WhatsApp','Referido','Web','Otro'],l.source) +
+      fldv('assigned','Asignado a','text',l.assigned||'') +
+      fldv('notes','Notas','text',l.notes||'') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-danger" style="margin-right:auto;" onclick="deleteLead(\'' + id + '\')">Eliminar</button>' +
+    '<button class="btn btn-primary" onclick="saveEditLead(\'' + id + '\')">Guardar</button>'
+  );
+}
+
+function saveEditLead(id) {
+  var l = STATE.leads.find(function(x){ return x.id===id; });
+  if (!l) return;
+  l.name = gv('name')||l.name; l.phone = gv('phone');
+  l.email = gv('email'); l.value = parseFloat(gv('value'))||l.value;
+  l.stage = document.getElementById('f-stage').value || l.stage;
+  l.source = gv('source'); l.assigned = gv('assigned'); l.notes = gv('notes');
+  saveState(); closeModal(); toast('Lead actualizado'); renderKanban();
+}
+
+function deleteLead(id) {
+  STATE.leads = STATE.leads.filter(function(x){ return x.id!==id; });
+  saveState(); closeModal(); toast('Lead eliminado'); renderKanban();
+}
+
+// ======================================================
+// MESSAGES
+// ======================================================
+var activeConvId = null;
+
+function renderMessages() {
+  if (STATE.conversations.length > 0 && !activeConvId) {
+    activeConvId = STATE.conversations[0].id;
+  }
+  var conv = STATE.conversations.find(function(c){ return c.id === activeConvId; });
+
+  var convListHTML = '';
+  STATE.conversations.forEach(function(c) {
+    var last = c.messages[c.messages.length - 1];
+    var isActive = c.id === activeConvId;
+    convListHTML += '<div class="conv-item' + (isActive?' active':'') + '" onclick="selectConv(\'' + c.id + '\')">' +
+      '<div style="width:40px;height:40px;border-radius:50%;background:#1e3a5f;display:flex;align-items:center;justify-content:center;font-weight:700;color:#60a5fa;flex-shrink:0;">' + initials(c.name) + '</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">' +
+          '<span style="font-weight:600;font-size:13px;color:#f8fafc;">' + esc(c.name) + '</span>' +
+          ((c.unread||0) > 0 ? '<span style="background:#3b82f6;color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;">' + c.unread + '</span>' : '') +
+        '</div>' +
+        '<div style="font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc((last ? last.text : 'Sin mensajes').substring(0,40)) + '</div>' +
+        '<div style="font-size:11px;color:#475569;margin-top:2px;">' + esc(c.channel||'WhatsApp') + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  var chatHTML = '';
+  if (conv) {
+    var msgsHTML = '';
+    conv.messages.forEach(function(m) {
+      var isOut = m.dir === 'out';
+      msgsHTML += '<div style="display:flex;justify-content:' + (isOut?'flex-end':'flex-start') + ';margin-bottom:10px;">' +
+        '<div style="max-width:70%;background:' + (isOut?'#1e3a5f':'#334155') + ';padding:10px 14px;border-radius:' + (isOut?'16px 16px 4px 16px':'16px 16px 16px 4px') + ';">' +
+          '<div style="font-size:14px;color:#f8fafc;">' + esc(m.text) + '</div>' +
+          '<div style="font-size:11px;color:#64748b;margin-top:4px;text-align:right;">' + esc(m.time||'') + (m.status?' - '+esc(m.status):'') + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    chatHTML =
+      '<div style="padding:14px 16px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:36px;height:36px;border-radius:50%;background:#1e3a5f;display:flex;align-items:center;justify-content:center;font-weight:700;color:#60a5fa;">' + initials(conv.name) + '</div>' +
+          '<div><div style="font-weight:600;color:#f8fafc;">' + esc(conv.name) + '</div>' +
+          '<div style="font-size:12px;color:#64748b;">' + esc(conv.channel||'WhatsApp') + '</div></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<button class="btn btn-sm btn-ghost" onclick="createLeadFromConv(\'' + conv.id + '\')">Lead</button>' +
+          '<button class="btn btn-sm btn-ghost" onclick="closeConv(\'' + conv.id + '\')">Cerrar</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="chat-msgs" style="flex:1;overflow-y:auto;padding:16px;">' + msgsHTML + '</div>' +
+      '<div style="padding:14px 16px;border-top:1px solid #334155;display:flex;gap:8px;flex-shrink:0;">' +
+        '<input type="text" id="msg-input" class="input" style="flex:1;" placeholder="Escribe un mensaje..." onkeydown="if(event.key===\'Enter\')sendMessage(\'' + conv.id + '\')">' +
+        '<button class="btn btn-primary" onclick="sendMessage(\'' + conv.id + '\')">Enviar</button>' +
+      '</div>';
+  } else {
+    chatHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;">Selecciona una conversacion</div>';
+  }
+
+  document.getElementById('section-messages').innerHTML =
+    '<div style="width:270px;border-right:1px solid #334155;display:flex;flex-direction:column;flex-shrink:0;">' +
+      '<div style="padding:14px 16px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;">' +
+        '<span style="font-weight:700;color:#f8fafc;font-size:15px;">Mensajes</span>' +
+        '<button class="btn btn-sm btn-primary" onclick="openNewConv()">+ Nueva</button>' +
+      '</div>' +
+      '<div style="flex:1;overflow-y:auto;">' + convListHTML + '</div>' +
+    '</div>' +
+    '<div style="flex:1;display:flex;flex-direction:column;min-width:0;">' + chatHTML + '</div>';
+
+  requestAnimationFrame(function() {
+    var cd = document.getElementById('chat-msgs');
+    if (cd) cd.scrollTop = cd.scrollHeight;
+  });
+}
+
+function selectConv(id) {
+  activeConvId = id;
+  var c = STATE.conversations.find(function(x){ return x.id===id; });
+  if (c) c.unread = 0;
+  renderMessages();
+}
+
+function sendMessage(convId) {
+  var inp = document.getElementById('msg-input');
+  var text = inp ? inp.value.trim() : '';
+  if (!text) return;
+  var conv = STATE.conversations.find(function(c){ return c.id===convId; });
+  if (!conv) return;
+  conv.messages.push({
+    id:uid(), text:text, dir:'out',
+    time:new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+    status:'Enviado'
+  });
+  saveState(); renderMessages();
+}
+
+function closeConv(convId) {
+  var conv = STATE.conversations.find(function(c){ return c.id===convId; });
+  if (conv) conv.status = 'closed';
+  saveState(); toast('Conversacion cerrada'); renderMessages();
+}
+
+function openNewConv() {
+  openModal('Nueva Conversacion',
+    fld('name','Nombre del Contacto','text','','Juan Perez') +
+    '<div style="margin-top:12px;">' + fld('phone','Telefono','tel','','+52 55 1234 5678') + '</div>' +
+    '<div style="margin-top:12px;">' + fldSel('channel','Canal',['WhatsApp','Instagram','Messenger','Web'],'') + '</div>' +
+    '<div style="margin-top:12px;">' + fld('msg','Primer Mensaje','text','','Hola, me interesa informacion sobre...') + '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveNewConv()">Iniciar Conversacion</button>'
+  );
+}
+
+function saveNewConv() {
+  var name = gv('name');
+  if (!name) { toast('El nombre es requerido'); return; }
+  var newConv = {
+    id:uid(), name:name, phone:gv('phone'),
+    channel:gv('channel')||'WhatsApp',
+    status:'open', unread:0, messages:[]
+  };
+  var msgText = gv('msg');
+  if (msgText) {
+    newConv.messages.push({
+      id:uid(), text:msgText, dir:'out',
+      time:new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+      status:'Enviado'
+    });
+  }
+  STATE.conversations.push(newConv);
+  activeConvId = newConv.id;
+  saveState(); closeModal(); toast('Conversacion iniciada'); renderMessages();
+}
+
+function createLeadFromConv(convId) {
+  var conv = STATE.conversations.find(function(c){ return c.id===convId; });
+  if (!conv) return;
+  openModal('Crear Lead desde Conversacion',
+    '<div class="form-grid">' +
+      fldv('name','Nombre','text',conv.name) +
+      fldv('phone','Telefono','tel',conv.phone||'') +
+      fld('email','Email','email','','') +
+      fld('value','Valor Estimado ($)','number','0','5000') +
+      fldSel('source','Fuente',['Meta Ads','Instagram','WhatsApp','Referido','Web','Otro'],conv.channel) +
+      fld('assigned','Asignado a','text','','Juan P.') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveLeadFromConv()">Crear Lead</button>'
+  );
+}
+
+function saveLeadFromConv() {
+  var name = gv('name');
+  if (!name) { toast('El nombre es requerido'); return; }
+  STATE.leads.push({
+    id:uid(), name:name, phone:gv('phone'), email:gv('email'),
+    value:parseFloat(gv('value'))||0, source:gv('source'),
+    stage:'NUEVO_LEAD', assigned:gv('assigned'),
+    notes:'', created:today()
+  });
+  saveState(); closeModal(); toast('Lead creado: ' + name);
+}
+
+// ======================================================
+// TECHNICIAN
+// ======================================================
+function renderTechnician() {
+  var installs = STATE.installations;
+  var cards = '';
+  installs.forEach(function(inst) {
+    var sColors = {Pendiente:'#f59e0b','En Progreso':'#3b82f6',Completado:'#10b981',Cancelado:'#ef4444'};
+    var sc = sColors[inst.status] || '#94a3b8';
+    cards += '<div class="card hover-card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">' +
+        '<div><div style="font-weight:600;color:#f8fafc;">' + esc(inst.customer) + '</div>' +
+        '<div style="font-size:12px;color:#64748b;margin-top:2px;">' + esc(inst.address) + '</div></div>' +
+        '<span class="badge" style="background:' + sc + '20;color:' + sc + ';">' + esc(inst.status) + '</span>' +
+      '</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:3px;">Fecha: ' + esc(inst.date) + '</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:3px;">Tecnico: ' + esc(inst.technician) + '</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">Servicio: ' + esc(inst.service) + '</div>' +
+      (inst.notes ? '<div style="font-size:12px;color:#64748b;margin-bottom:12px;padding:8px;background:#0f172a;border-radius:6px;">' + esc(inst.notes) + '</div>' : '') +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="btn btn-sm btn-primary" style="flex:1;" onclick="updateInstStatus(\'' + inst.id + '\')">Actualizar Estado</button>' +
+        '<button class="btn btn-sm btn-ghost" onclick="editInstallation(\'' + inst.id + '\')">Editar</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="deleteInstallation(\'' + inst.id + '\')">Borrar</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  document.getElementById('section-technician').innerHTML =
+    '<div style="padding:24px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<div><h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin:0;">Tecnicos</h1>' +
+        '<p style="color:#64748b;margin:4px 0 0;font-size:13px;">Instalaciones y servicios</p></div>' +
+        '<button class="btn btn-primary" onclick="openAddInstallation()">+ Nueva Instalacion</button>' +
+      '</div>' +
+      (installs.length === 0
+        ? '<div class="card" style="text-align:center;padding:40px;color:#64748b;">Sin instalaciones registradas</div>'
+        : '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">' + cards + '</div>'
+      ) +
+    '</div>';
+}
+
+function updateInstStatus(id) {
+  var inst = STATE.installations.find(function(x){ return x.id===id; });
+  if (!inst) return;
+  var statuses = ['Pendiente','En Progreso','Completado','Cancelado'];
+  var opts = '';
+  statuses.forEach(function(s) {
+    opts += '<option value="' + s + '"' + (inst.status===s?' selected':'') + '>' + s + '</option>';
+  });
+  openModal('Actualizar Estado — ' + esc(inst.customer),
+    '<div><label class="form-label">Estado</label><select id="f-status" class="input">' + opts + '</select></div>' +
+    '<div style="margin-top:12px;">' + fld('techNote','Nota del Tecnico','text','','Trabajo completado...') + '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveInstStatus(\'' + id + '\')">Actualizar</button>'
+  );
+}
+
+function saveInstStatus(id) {
+  var inst = STATE.installations.find(function(x){ return x.id===id; });
+  if (!inst) return;
+  inst.status = document.getElementById('f-status').value;
+  var note = gv('techNote');
+  if (note) inst.notes = (inst.notes ? inst.notes + '\n' : '') + today() + ': ' + note;
+  saveState(); closeModal(); toast('Estado: ' + inst.status); renderTechnician();
+}
+
+function openAddInstallation() {
+  openModal('Nueva Instalacion',
+    '<div class="form-grid">' +
+      fld('customer','Cliente','text','','Juan Perez') +
+      fld('address','Direccion','text','','Calle 123, Col. Centro') +
+      fld('service','Servicio','text','','Instalacion Kit 4 Camaras HD') +
+      fld('technician','Tecnico Asignado','text','','Carlos M.') +
+      fld('date','Fecha Programada','date',today(),'') +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveNewInstallation()">Crear</button>'
+  );
+}
+
+function saveNewInstallation() {
+  var customer = gv('customer');
+  if (!customer) { toast('El cliente es requerido'); return; }
+  STATE.installations.push({
+    id:uid(), customer:customer, address:gv('address'),
+    service:gv('service'), technician:gv('technician'),
+    date:gv('date')||today(), status:'Pendiente', notes:''
+  });
+  saveState(); closeModal(); toast('Instalacion creada'); renderTechnician();
+}
+
+function editInstallation(id) {
+  var inst = STATE.installations.find(function(x){ return x.id===id; });
+  if (!inst) return;
+  openModal('Editar Instalacion',
+    '<div class="form-grid">' +
+      fldv('customer','Cliente','text',inst.customer) +
+      fldv('address','Direccion','text',inst.address||'') +
+      fldv('service','Servicio','text',inst.service||'') +
+      fldv('technician','Tecnico','text',inst.technician||'') +
+      fldv('date','Fecha','date',inst.date||today()) +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="saveEditInstallation(\'' + id + '\')">Guardar</button>'
+  );
+}
+
+function saveEditInstallation(id) {
+  var inst = STATE.installations.find(function(x){ return x.id===id; });
+  if (!inst) return;
+  inst.customer = gv('customer')||inst.customer;
+  inst.address = gv('address'); inst.service = gv('service');
+  inst.technician = gv('technician'); inst.date = gv('date')||inst.date;
+  saveState(); closeModal(); toast('Instalacion actualizada'); renderTechnician();
+}
+
+function deleteInstallation(id) {
+  STATE.installations = STATE.installations.filter(function(x){ return x.id!==id; });
+  saveState(); toast('Instalacion eliminada'); renderTechnician();
+}
+
+// ======================================================
+// META ADS
+// ======================================================
+function renderMetaAds() {
+  var campaigns = [
+    {name:'Camaras CDMX Q2 2026',status:'Activa',budget:8000,spent:6240,leads:34,cpl:183,channel:'Facebook'},
+    {name:'Alarmas Residenciales',status:'Activa',budget:5000,spent:4100,leads:22,cpl:186,channel:'Instagram'},
+    {name:'Kit Seguridad Empresas',status:'Pausada',budget:12000,spent:9800,leads:41,cpl:239,channel:'Facebook'},
+    {name:'Retargeting Website',status:'Activa',budget:3000,spent:2100,leads:18,cpl:117,channel:'Facebook+IG'}
+  ];
+
+  var totalLeads = campaigns.reduce(function(s,c){ return s+c.leads; }, 0);
+  var totalSpent = campaigns.reduce(function(s,c){ return s+c.spent; }, 0);
+  var totalBudget = campaigns.reduce(function(s,c){ return s+c.budget; }, 0);
+  var avgCpl = Math.round(totalSpent / totalLeads);
+
+  var rows = '';
+  campaigns.forEach(function(c) {
+    var pct = Math.round((c.spent/c.budget)*100);
+    var sc = c.status === 'Activa' ? '#10b981' : '#f59e0b';
+    rows += '<div class="card" style="margin-bottom:14px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
+        '<div><div style="font-weight:600;color:#f8fafc;">' + esc(c.name) + '</div>' +
+        '<div style="font-size:12px;color:#64748b;margin-top:2px;">' + esc(c.channel) + '</div></div>' +
+        '<span class="badge" style="background:' + sc + '20;color:' + sc + ';">' + c.status + '</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">' +
+        mBox('Presupuesto', fmtC(c.budget)) +
+        mBox('Gastado', fmtC(c.spent)) +
+        mBox('Leads', c.leads) +
+        mBox('CPL', fmtC(c.cpl)) +
+      '</div>' +
+      '<div style="height:6px;background:#334155;border-radius:3px;">' +
+        '<div style="width:' + pct + '%;height:100%;background:' + (pct>90?'#ef4444':'#3b82f6') + ';border-radius:3px;"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#64748b;margin-top:4px;">' + pct + '% del presupuesto utilizado</div>' +
+    '</div>';
+  });
+
+  document.getElementById('section-metaads').innerHTML =
+    '<div style="padding:24px;">' +
+      '<div style="margin-bottom:24px;"><h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin:0;">Meta Ads</h1>' +
+      '<p style="color:#64748b;margin:4px 0 0;font-size:13px;">Campanas de Facebook e Instagram</p></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px;">' +
+        kpiCard('Total Leads', totalLeads, '#3b82f6', 'este mes') +
+        kpiCard('Gasto Total', fmtC(totalSpent), '#ef4444', 'de ' + fmtC(totalBudget)) +
+        kpiCard('CPL Promedio', fmtC(avgCpl), '#8b5cf6', 'costo por lead') +
+        kpiCard('Activas', campaigns.filter(function(c){ return c.status==='Activa'; }).length, '#10b981', 'de ' + campaigns.length + ' total') +
+      '</div>' +
+      rows +
+    '</div>';
+}
+
+function mBox(label, value) {
+  return '<div style="background:#334155;border-radius:8px;padding:10px;text-align:center;">' +
+    '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">' + label + '</div>' +
+    '<div style="font-weight:700;color:#f8fafc;font-size:14px;">' + value + '</div>' +
+  '</div>';
+}
+
+// ======================================================
+// SETTINGS
+// ======================================================
+function renderSettings() {
+  var logo = STATE.company.logo;
+  var logoPreview = logo
+    ? '<img src="' + logo + '" style="width:72px;height:72px;border-radius:12px;object-fit:cover;">'
+    : '<div style="width:72px;height:72px;border-radius:12px;background:#1e3a5f;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#60a5fa;">' + esc(STATE.company.name.charAt(0)) + '</div>';
+
+  document.getElementById('section-settings').innerHTML =
+    '<div style="padding:24px;max-width:600px;">' +
+      '<h1 style="font-size:22px;font-weight:700;color:#f8fafc;margin-bottom:24px;">Configuracion</h1>' +
+
+      '<div class="card" style="margin-bottom:16px;">' +
+        '<div style="font-weight:600;color:#f8fafc;margin-bottom:16px;">Informacion de la Empresa</div>' +
+        '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">' +
+          logoPreview +
+          '<div>' +
+            '<div style="font-weight:600;color:#f8fafc;margin-bottom:10px;">' + esc(STATE.company.name) + '</div>' +
+            '<label class="btn btn-sm btn-ghost" style="cursor:pointer;display:inline-block;">' +
+              'Cambiar Logo' +
+              '<input type="file" accept="image/*" style="display:none;" onchange="uploadLogo(this)">' +
+            '</label>' +
+            (logo ? '<button class="btn btn-sm btn-danger" style="margin-left:8px;" onclick="removeLogo()">Quitar Logo</button>' : '') +
+            '<div style="font-size:11px;color:#64748b;margin-top:6px;">JPG, PNG, GIF - max 2MB</div>' +
+          '</div>' +
+        '</div>' +
+        '<label class="form-label">Nombre de la Empresa</label>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<input type="text" id="company-name-inp" class="input" value="' + esc(STATE.company.name) + '" style="flex:1;">' +
+          '<button class="btn btn-primary" onclick="saveCompanyName()">Guardar</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-bottom:16px;">' +
+        '<div style="font-weight:600;color:#f8fafc;margin-bottom:12px;">Estadisticas</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">' +
+          mBox('Productos', STATE.products.length) +
+          mBox('Clientes', STATE.customers.length) +
+          mBox('Leads', STATE.leads.length) +
+          mBox('Movimientos', STATE.movements.length) +
+        '</div>' +
+        '<button class="btn btn-danger" onclick="confirmReset()">Resetear Todos los Datos (Demo)</button>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div style="font-weight:600;color:#f8fafc;margin-bottom:6px;">GreyCRM Demo Interactiva v3.0</div>' +
+        '<div style="font-size:13px;color:#64748b;">Los datos se guardan en localStorage del navegador. Funciona sin conexion a internet.</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function uploadLogo(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('La imagen debe ser menor a 2MB'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    STATE.company.logo = e.target.result;
+    saveState(); renderSidebar(); renderSettings();
+    toast('Logo actualizado');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  STATE.company.logo = null;
+  saveState(); renderSidebar(); renderSettings();
+  toast('Logo removido');
+}
+
+function saveCompanyName() {
+  var inp = document.getElementById('company-name-inp');
+  var name = inp ? inp.value.trim() : '';
+  if (!name) { toast('El nombre no puede estar vacio'); return; }
+  STATE.company.name = name;
+  saveState(); renderSidebar(); toast('Nombre actualizado: ' + name);
+}
+
+function confirmReset() {
+  openModal('Resetear todos los datos?',
+    '<div style="text-align:center;padding:24px;">' +
+      '<div style="color:#f8fafc;font-weight:600;font-size:16px;margin-bottom:8px;">Se perderan todos los cambios realizados.</div>' +
+      '<div style="color:#94a3b8;font-size:13px;">Los datos volvaran al estado inicial de la demo.</div>' +
+    '</div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-danger" onclick="doReset()">Si, Resetear Todo</button>'
+  );
+}
+
+function doReset() {
+  localStorage.removeItem('greycrm_v3');
+  location.reload();
+}
+
+// ======================================================
+// FORM HELPERS
+// ======================================================
+function fld(key, label, type, defVal, placeholder) {
+  return '<div>' +
+    '<label class="form-label">' + label + '</label>' +
+    '<input type="' + type + '" id="f-' + key + '" class="input" value="' + esc(String(defVal||'')) + '" placeholder="' + esc(placeholder||'') + '">' +
+  '</div>';
+}
+
+function fldv(key, label, type, value) {
+  return '<div>' +
+    '<label class="form-label">' + label + '</label>' +
+    '<input type="' + type + '" id="f-' + key + '" class="input" value="' + esc(String(value == null ? '' : value)) + '">' +
+  '</div>';
+}
+
+function fldSel(key, label, options, selected) {
+  var opts = '';
+  options.forEach(function(o) {
+    opts += '<option value="' + esc(o) + '"' + (selected===o?' selected':'') + '>' + esc(o) + '</option>';
+  });
+  return '<div>' +
+    '<label class="form-label">' + label + '</label>' +
+    '<select id="f-' + key + '" class="input">' + opts + '</select>' +
+  '</div>';
+}
+
+function gv(key) {
+  var el = document.getElementById('f-' + key);
+  return el ? el.value.trim() : '';
+}
+
+// ======================================================
+// INIT
+// ======================================================
+window.addEventListener('load', function() {
+  loadState();
+  document.querySelectorAll('.section').forEach(function(s){ s.style.display = 'none'; });
+  renderSidebar();
+  showSection('dashboard');
+});
 </script>
 </body>
 </html>
