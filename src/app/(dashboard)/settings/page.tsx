@@ -137,7 +137,6 @@ const FONT_OPTIONS = [
   { label: "Century Gothic / Geometrico", value: "\"Century Gothic\", CenturyGothic, AppleGothic, sans-serif" },
   { label: "Avenir / Premium limpio", value: "Avenir, \"Avenir Next\", \"Segoe UI\", sans-serif" },
   { label: "Optima / Sofisticado", value: "Optima, Candara, \"Segoe UI\", sans-serif" },
-  { label: "Georgia / Editorial elegante", value: "Georgia, \"Times New Roman\", serif" },
 ];
 
 const CURRENCY_OPTIONS = [

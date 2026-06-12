@@ -63,9 +63,13 @@ export default function RootLayout({
                     : theme;
                   document.documentElement.classList.remove("light", "dark");
                   document.documentElement.classList.add(resolved);
-                  if (!localStorage.getItem("greycrm-font-family")) {
-                    document.documentElement.style.setProperty("--app-font-family", "var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif");
+                  var defaultFont = "var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif";
+                  var storedFont = localStorage.getItem("greycrm-font-family");
+                  if (!storedFont || /\\b(serif|georgia|times|cambria|garamond|baskerville)\\b/i.test(storedFont)) {
+                    localStorage.setItem("greycrm-font-family", defaultFont);
+                    storedFont = defaultFont;
                   }
+                  document.documentElement.style.setProperty("--app-font-family", storedFont);
                 } catch (error) {}
               })();
             `,
