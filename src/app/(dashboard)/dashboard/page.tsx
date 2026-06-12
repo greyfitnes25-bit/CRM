@@ -593,19 +593,19 @@ export default function DashboardPage() {
             </span>
             <span className="day-light-sweep absolute -left-20 top-20" />
           </div>
-          <div className="absolute right-4 top-4 z-30 hidden items-end gap-2 text-right dark:hidden sm:flex">
-            <div className="rounded-xl border border-sky-200/70 bg-white/75 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+          <div className="absolute right-4 top-4 z-30 hidden max-w-[245px] flex-wrap items-start justify-end gap-2 text-right dark:hidden sm:flex">
+            <div className="rounded-xl border border-sky-200/70 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
               <div className="font-semibold text-slate-900">{liveStatus.time}</div>
               <div className="text-sky-700">Santo Domingo</div>
             </div>
-            <div className="rounded-xl border border-amber-200/80 bg-white/75 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+            <div className="rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
               <div className="font-semibold text-slate-900">USD</div>
               <div className="text-amber-700">{liveStatus.usdRate}</div>
             </div>
-          </div>
-          <div className="absolute bottom-4 left-4 z-30 hidden rounded-xl border border-sky-200/70 bg-white/75 px-3 py-2 text-xs shadow-sm backdrop-blur-md dark:hidden sm:block">
-            <div className="font-semibold text-slate-900">{liveStatus.temperature}</div>
-            <div className="text-sky-700">{liveStatus.weather}</div>
+            <div className="rounded-xl border border-sky-200/70 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+              <div className="font-semibold text-slate-900">{liveStatus.temperature}</div>
+              <div className="text-sky-700">{liveStatus.weather}</div>
+            </div>
           </div>
           <CardHeader className="relative z-20 pb-4">
             <CardTitle className="text-base">Leads por Canal</CardTitle>
