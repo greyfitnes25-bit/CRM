@@ -23,7 +23,7 @@ import { cn, getInitials, formatDateRelative } from "@/lib/utils";
 import { DEMO_CONVERSATIONS, DEMO_MESSAGES, DEMO_QUICK_REPLIES, type DemoConversation, type DemoMessage } from "@/lib/demo-data";
 import { ChannelLogo, type ChannelLogoId } from "@/components/common/channel-logo";
 
-type Channel = "ALL" | "WHATSAPP" | "INSTAGRAM" | "MESSENGER" | "WEB";
+type Channel = "ALL" | "WHATSAPP" | "INSTAGRAM" | "MESSENGER" | "META_ADS" | "WEB";
 type StatusFilter = "ALL" | "OPEN" | "PENDING" | "CLOSED";
 type MessageMode = "reply" | "note";
 
@@ -51,6 +51,14 @@ const CHANNEL_CONFIG = {
     bg: "bg-blue-500",
     badge: "bg-blue-100 text-blue-700 border-blue-200",
     dot: "bg-blue-500",
+  },
+  META_ADS: {
+    label: "Meta Ads",
+    icon: MessageSquare,
+    color: "text-blue-600",
+    bg: "bg-blue-600",
+    badge: "bg-blue-100 text-blue-700 border-blue-200",
+    dot: "bg-blue-600",
   },
   WEB: {
     label: "Web",
@@ -87,6 +95,15 @@ export default function MessagesPage() {
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
   const currentMessages = selectedId ? (messages[selectedId] ?? []) : [];
+
+  useEffect(() => {
+    const requestedChannel = new URLSearchParams(window.location.search).get("channel")?.toUpperCase();
+    const validChannels: Channel[] = ["ALL", "WHATSAPP", "INSTAGRAM", "MESSENGER", "META_ADS", "WEB"];
+    if (requestedChannel && validChannels.includes(requestedChannel as Channel)) {
+      setChannelFilter(requestedChannel as Channel);
+      setShowMobileList(true);
+    }
+  }, []);
 
   const filtered = conversations.filter((c) => {
     if (channelFilter !== "ALL" && c.channel !== channelFilter) return false;
@@ -242,7 +259,7 @@ export default function MessagesPage() {
 
         {/* Filtros de canal */}
         <div className="grid grid-cols-2 gap-2 p-3 border-b border-border shrink-0 sm:flex sm:flex-wrap">
-          {(["ALL", "WHATSAPP", "INSTAGRAM", "MESSENGER", "WEB"] as Channel[]).map((ch) => {
+          {(["ALL", "WHATSAPP", "INSTAGRAM", "MESSENGER", "META_ADS", "WEB"] as Channel[]).map((ch) => {
             const count = ch === "ALL" ? conversations.length : conversations.filter((c) => c.channel === ch).length;
             return (
               <button

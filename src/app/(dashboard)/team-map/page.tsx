@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import {
@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DOMINICAN_REPUBLIC_MAP, TECHNICIAN_SAMPLE_LOCATIONS } from "@/lib/regional";
+import { DOMINICAN_REPUBLIC_MAP } from "@/lib/regional";
 import { cn } from "@/lib/utils";
 
 const TEAM = [
@@ -26,7 +26,7 @@ const TEAM = [
     role: "Tecnico",
     status: "En ruta",
     phone: "+1 809 555 0101",
-    currentTask: "INST-0001 · Piantini",
+    currentTask: "INST-0001 Â· Piantini",
     lat: 18.4861,
     lng: -69.9312,
     city: "Santo Domingo",
@@ -38,7 +38,7 @@ const TEAM = [
     role: "Tecnico",
     status: "Instalando",
     phone: "+1 829 555 0102",
-    currentTask: "INST-0011 · Santiago",
+    currentTask: "INST-0011 Â· Santiago",
     lat: 19.4517,
     lng: -70.697,
     city: "Santiago de los Caballeros",
@@ -62,7 +62,7 @@ const TEAM = [
     role: "Mensajero",
     status: "En ruta",
     phone: "+1 809 555 0104",
-    currentTask: "Entrega DVR · Naco",
+    currentTask: "Entrega DVR Â· Naco",
     lat: 18.478,
     lng: -69.927,
     city: "Distrito Nacional",
@@ -74,7 +74,7 @@ const TEAM = [
     role: "Tecnico",
     status: "En pausa",
     phone: "+1 829 555 0105",
-    currentTask: "Reparacion garantia · Haina",
+    currentTask: "Reparacion garantia Â· Haina",
     lat: 18.4167,
     lng: -70.0333,
     city: "San Cristobal",
@@ -98,13 +98,18 @@ function wazeUrl(lat: number, lng: number) {
 }
 
 function markerPosition(lat: number, lng: number) {
-  const bounds = { north: 19.95, south: 17.45, west: -72.05, east: -68.25 };
+  const bounds = { north: 19.95, south: 17.55, west: -72.05, east: -68.25 };
   const x = ((lng - bounds.west) / (bounds.east - bounds.west)) * 100;
   const y = ((bounds.north - lat) / (bounds.north - bounds.south)) * 100;
   return {
-    left: `${Math.min(88, Math.max(12, x))}%`,
-    top: `${Math.min(82, Math.max(16, y))}%`,
+    left: `${Math.min(92, Math.max(8, x))}%`,
+    top: `${Math.min(86, Math.max(12, y))}%`,
   };
+}
+
+function osmEmbedUrl(lat: number, lng: number) {
+  const marker = `${lat.toFixed(5)}%2C${lng.toFixed(5)}`;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=-72.15%2C17.45%2C-68.15%2C20.05&layer=mapnik&marker=${marker}`;
 }
 
 export default function TeamMapPage() {
@@ -185,39 +190,21 @@ export default function TeamMapPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative h-[540px] overflow-hidden bg-[#eaf7ff] dark:bg-slate-950">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(14,165,233,0.22),transparent_30%),radial-gradient(circle_at_80%_12%,rgba(16,185,129,0.16),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.8),rgba(219,234,254,0.4))] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.22),transparent_30%),radial-gradient(circle_at_75%_25%,rgba(16,185,129,0.12),transparent_30%),linear-gradient(135deg,rgba(2,6,23,1),rgba(15,23,42,1))]" />
-              <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(rgba(59,130,246,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.18) 1px, transparent 1px)", backgroundSize: "42px 42px" }} />
-
-              <svg viewBox="0 0 900 540" className="absolute inset-0 h-full w-full" role="img" aria-label="Mapa visual de Republica Dominicana">
-                <defs>
-                  <linearGradient id="islandGradient" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.95" />
-                    <stop offset="45%" stopColor="#22c55e" stopOpacity="0.92" />
-                    <stop offset="100%" stopColor="#0f766e" stopOpacity="0.9" />
-                  </linearGradient>
-                  <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="12" stdDeviation="14" floodColor="#0f172a" floodOpacity="0.24" />
-                  </filter>
-                </defs>
-                <path
-                  d="M143 273 C154 206 220 164 309 149 C383 137 453 153 518 139 C592 124 664 142 731 172 C785 197 822 244 812 295 C802 347 742 366 690 385 C630 407 587 443 520 440 C456 437 421 398 361 399 C298 400 247 430 194 405 C151 385 135 331 143 273Z"
-                  fill="url(#islandGradient)"
-                  filter="url(#softShadow)"
-                  className="opacity-90"
-                />
-                <path d="M461 153 C479 205 467 251 509 287 C552 324 599 300 640 328 C686 360 666 404 697 424" fill="none" stroke="#ffffff" strokeOpacity="0.5" strokeWidth="7" strokeLinecap="round" />
-                <path d="M196 300 C277 275 332 287 405 253 C480 218 548 204 638 217 C709 227 758 260 808 294" fill="none" stroke="#0f172a" strokeOpacity="0.22" strokeWidth="5" strokeDasharray="12 14" strokeLinecap="round" />
-                <text x="354" y="256" fill="white" fontSize="21" fontWeight="700" opacity="0.95">Republica Dominicana</text>
-                <text x="398" y="286" fill="white" fontSize="13" fontWeight="600" opacity="0.8">Vista operativa del equipo</text>
-                <circle cx="430" cy="272" r="155" fill="none" stroke="#ffffff" strokeOpacity="0.25" strokeWidth="2" strokeDasharray="8 10" />
-                <circle cx="430" cy="272" r="230" fill="none" stroke="#0284c7" strokeOpacity="0.2" strokeWidth="2" />
-              </svg>
-
+            <div className="relative h-[540px] overflow-hidden bg-slate-100 dark:bg-slate-950">
+              <iframe
+                key={selected.id}
+                title="Mapa real de Republica Dominicana"
+                src={osmEmbedUrl(selected.lat, selected.lng)}
+                className="absolute inset-0 h-full w-full border-0 grayscale-[12%] saturate-110"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-background/5 via-transparent to-background/40" />
+              <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-border/60" />
               <div className="absolute left-4 top-4 rounded-2xl border bg-background/90 p-3 shadow-lg backdrop-blur">
                 <div className="text-xs text-muted-foreground">Centro de operaciones</div>
                 <div className="font-semibold">{selected.name}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{selected.city} · {selected.lastUpdate}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{selected.city} Â· {selected.lastUpdate}</div>
               </div>
 
               <div className="absolute inset-0">
@@ -228,7 +215,7 @@ export default function TeamMapPage() {
                       key={member.id}
                       onClick={() => setSelectedId(member.id)}
                       className={cn(
-                        "absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-background/95 px-3 py-2 text-xs font-semibold shadow-lg transition hover:scale-105",
+                        "absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-background/95 px-3 py-2 text-xs font-semibold shadow-xl transition hover:z-20 hover:scale-105",
                         active && "scale-110 ring-4 ring-primary/20",
                         member.role === "Mensajero" ? "border-amber-300 text-amber-700" : "border-blue-300 text-blue-700"
                       )}
@@ -278,7 +265,7 @@ export default function TeamMapPage() {
                     </div>
                     <div>
                       <div className="font-semibold">{member.name}</div>
-                      <div className="text-xs text-muted-foreground">{member.role} · {member.city}</div>
+                      <div className="text-xs text-muted-foreground">{member.role} Â· {member.city}</div>
                     </div>
                   </div>
                   <Badge className={cn("border", STATUS_STYLES[member.status])}>{member.status}</Badge>
@@ -333,3 +320,4 @@ export default function TeamMapPage() {
     </div>
   );
 }
+

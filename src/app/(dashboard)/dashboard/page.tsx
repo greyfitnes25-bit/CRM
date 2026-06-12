@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -73,6 +74,41 @@ const leadsByChannel: Array<{ key: ChannelLogoId; name: string; value: number; c
   { key: "REFERRAL", name: "Referidos", value: 6, color: "#F59E0B" },
   { key: "WEB", name: "Web", value: 4, color: "#6366F1" },
 ];
+
+type SantoDomingoLiveStatus = {
+  time: string;
+  usdRate: string;
+  weather: string;
+  temperature: string;
+  condition: "sunny" | "cloudy" | "rainy";
+};
+
+const defaultLiveStatus: SantoDomingoLiveStatus = {
+  time: "--:--",
+  usdRate: "RD$ --",
+  weather: "Santo Domingo",
+  temperature: "--",
+  condition: "sunny",
+};
+
+const messageChannelTarget: Partial<Record<ChannelLogoId, string>> = {
+  WHATSAPP: "WHATSAPP",
+  INSTAGRAM: "INSTAGRAM",
+  MESSENGER: "MESSENGER",
+  META_ADS: "META_ADS",
+  WEB: "WEB",
+  REFERRAL: "WEB",
+};
+
+function weatherCodeToStatus(code: number): Pick<SantoDomingoLiveStatus, "weather" | "condition"> {
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code)) {
+    return { weather: "Lluvia en SD", condition: "rainy" };
+  }
+  if ([1, 2, 3, 45, 48].includes(code)) {
+    return { weather: "Nublado en SD", condition: "cloudy" };
+  }
+  return { weather: "Soleado en SD", condition: "sunny" };
+}
 
 const funnelData = [
   { stage: "Nuevo Lead", count: 85, percentage: 100, color: "bg-blue-500" },
@@ -358,10 +394,77 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const [liveStatus, setLiveStatus] = useState<SantoDomingoLiveStatus>(defaultLiveStatus);
   const today = format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es });
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
+
+  useEffect(() => {
+    let active = true;
+
+    const updateClock = () => {
+      const time = new Intl.DateTimeFormat("es-DO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/Santo_Domingo",
+      }).format(new Date());
+      setLiveStatus((current) => ({ ...current, time }));
+    };
+
+    const loadLiveData = async () => {
+      updateClock();
+      try {
+        const [weatherResponse, rateResponse] = await Promise.allSettled([
+          fetch("https://api.open-meteo.com/v1/forecast?latitude=18.4861&longitude=-69.9312&current=temperature_2m,weather_code&timezone=America%2FSanto_Domingo", { cache: "no-store" }),
+          fetch("https://open.er-api.com/v6/latest/USD", { cache: "no-store" }),
+        ]);
+
+        if (!active) return;
+
+        let nextStatus: Partial<SantoDomingoLiveStatus> = {};
+
+        if (weatherResponse.status === "fulfilled" && weatherResponse.value.ok) {
+          const weatherData = await weatherResponse.value.json();
+          const current = weatherData.current ?? {};
+          const weather = weatherCodeToStatus(Number(current.weather_code ?? 0));
+          nextStatus = {
+            ...nextStatus,
+            ...weather,
+            temperature: `${Math.round(Number(current.temperature_2m ?? 27))}°C`,
+          };
+        }
+
+        if (rateResponse.status === "fulfilled" && rateResponse.value.ok) {
+          const rateData = await rateResponse.value.json();
+          const dopRate = Number(rateData.rates?.DOP);
+          if (Number.isFinite(dopRate)) {
+            nextStatus.usdRate = `RD$ ${dopRate.toFixed(2)}`;
+          }
+        }
+
+        setLiveStatus((current) => ({ ...current, ...nextStatus }));
+      } catch {
+        setLiveStatus((current) => ({ ...current, weather: "Santo Domingo" }));
+      }
+    };
+
+    loadLiveData();
+    const clock = window.setInterval(updateClock, 30000);
+    const refresh = window.setInterval(loadLiveData, 1000 * 60 * 30);
+
+    return () => {
+      active = false;
+      window.clearInterval(clock);
+      window.clearInterval(refresh);
+    };
+  }, []);
+
+  const openMessagesChannel = (channel: ChannelLogoId) => {
+    const target = messageChannelTarget[channel] ?? "ALL";
+    router.push(`/messages?channel=${target}`);
+  };
 
   return (
     <div className="space-y-4 md:space-y-6 page-transition">
@@ -467,9 +570,13 @@ export default function DashboardPage() {
               <img src="/space/astronaut-wave-realistic.png" alt="" className="space-astronaut-pose space-astronaut-pose-wave absolute inset-0 h-full w-full object-contain" />
             </div>
           </div>
-          <div className="channel-day-scene pointer-events-none absolute inset-x-0 z-[12] block overflow-hidden dark:hidden" aria-hidden="true">
+          <div className={cn("channel-day-scene pointer-events-none absolute inset-x-0 z-[12] block overflow-hidden dark:hidden", `weather-${liveStatus.condition}`)} aria-hidden="true">
             <span className="day-earth-horizon absolute inset-x-0 bottom-[-118px]" />
             <span className="day-sunrise absolute left-1/2 top-[28px]" />
+            <span className="day-cloud day-cloud-one absolute" />
+            <span className="day-cloud day-cloud-two absolute" />
+            <span className="day-cloud day-cloud-three absolute" />
+            <span className="day-rain absolute" />
             <span className="day-orbit-ring day-orbit-ring-one absolute left-1/2 top-[138px]" />
             <span className="day-orbit-ring day-orbit-ring-two absolute left-1/2 top-[138px]" />
             <span className="day-data-satellite day-data-satellite-one absolute left-1/2 top-[138px]">
@@ -485,6 +592,20 @@ export default function DashboardPage() {
               <img src="/social/messenger.png" alt="" />
             </span>
             <span className="day-light-sweep absolute -left-20 top-20" />
+          </div>
+          <div className="absolute right-4 top-4 z-30 hidden items-end gap-2 text-right dark:hidden sm:flex">
+            <div className="rounded-xl border border-sky-200/70 bg-white/75 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+              <div className="font-semibold text-slate-900">{liveStatus.time}</div>
+              <div className="text-sky-700">Santo Domingo</div>
+            </div>
+            <div className="rounded-xl border border-amber-200/80 bg-white/75 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+              <div className="font-semibold text-slate-900">USD</div>
+              <div className="text-amber-700">{liveStatus.usdRate}</div>
+            </div>
+          </div>
+          <div className="absolute bottom-4 left-4 z-30 hidden rounded-xl border border-sky-200/70 bg-white/75 px-3 py-2 text-xs shadow-sm backdrop-blur-md dark:hidden sm:block">
+            <div className="font-semibold text-slate-900">{liveStatus.temperature}</div>
+            <div className="text-sky-700">{liveStatus.weather}</div>
           </div>
           <CardHeader className="relative z-20 pb-4">
             <CardTitle className="text-base">Leads por Canal</CardTitle>
@@ -557,13 +678,18 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-2 mt-2">
               {leadsByChannel.map((item) => (
-                <div key={item.name} className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2 text-sm">
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => openMessagesChannel(item.key)}
+                  className="flex w-full items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm"
+                >
                   <div className="flex items-center gap-2">
                     <ChannelLogo channel={item.key} className="h-5 w-5" />
                     <span className="text-muted-foreground">{item.name}</span>
                   </div>
                   <span className="font-medium tabular-nums">{item.value}%</span>
-                </div>
+                </button>
               ))}
             </div>
           </CardContent>
