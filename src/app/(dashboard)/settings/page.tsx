@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Palette, Users, Shield, GitBranch, MessageSquare, Plug, CreditCard, Check, Plus, Trash2, Edit2, Lock, Sun, Moon } from "lucide-react";
+import { Building2, Palette, Users, Shield, GitBranch, MessageSquare, Plug, CreditCard, Check, Plus, Trash2, Edit2, Lock, Sun, Moon, ExternalLink, Copy, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,32 +22,42 @@ import {
 } from "@/components/providers/appearance-preference-provider";
 import { getStoredAppFont, setAppFont } from "@/components/providers/font-preference-provider";
 import { RoleAvatar } from "@/components/common/role-avatar";
+import { ChannelLogo, type ChannelLogoId } from "@/components/common/channel-logo";
 
 interface CompanyUser { id: string; name: string; email: string; role: string; status: string; avatar?: string | null; }
 interface QuickReply { id: string; title: string; content: string; }
 interface SalesStage { id: string; name: string; color: string; }
+interface MetaIntegration {
+  id: string;
+  name: string;
+  channel: ChannelLogoId;
+  desc: string;
+  status: "connected" | "ready" | "pending";
+  color: string;
+  requirements: string[];
+}
 
 const INITIAL_USERS: CompanyUser[] = [
   { id: "u1", name: "Admin Principal", email: "admin@greycrm.com", role: "OWNER", status: "ACTIVE" },
-  { id: "u2", name: "Juan Pérez", email: "juan.perez@empresa.com", role: "SELLER", status: "ACTIVE" },
-  { id: "u3", name: "Ana García", email: "ana.garcia@empresa.com", role: "SELLER", status: "ACTIVE" },
-  { id: "u4", name: "Carlos Técnico", email: "carlos.tecnico@empresa.com", role: "TECHNICIAN", status: "ACTIVE" },
-  { id: "u5", name: "Luis Martínez", email: "luis.martinez@empresa.com", role: "SUPPORT", status: "INACTIVE" },
+  { id: "u2", name: "Juan PÃ©rez", email: "juan.perez@empresa.com", role: "SELLER", status: "ACTIVE" },
+  { id: "u3", name: "Ana GarcÃ­a", email: "ana.garcia@empresa.com", role: "SELLER", status: "ACTIVE" },
+  { id: "u4", name: "Carlos TÃ©cnico", email: "carlos.tecnico@empresa.com", role: "TECHNICIAN", status: "ACTIVE" },
+  { id: "u5", name: "Luis MartÃ­nez", email: "luis.martinez@empresa.com", role: "SUPPORT", status: "INACTIVE" },
 ];
 
 const INITIAL_QUICK_REPLIES: QuickReply[] = [
-  { id: "qr1", title: "Saludo inicial", content: "¡Hola! Gracias por contactarnos. ¿En qué podemos ayudarte hoy?" },
-  { id: "qr2", title: "Solicitar datos", content: "Para ayudarte mejor, ¿me podrías proporcionar tu nombre y teléfono?" },
-  { id: "qr3", title: "Enviar catálogo", content: "Con gusto te compartimos nuestro catálogo. ¿Lo prefieres por email o WhatsApp?" },
-  { id: "qr4", title: "Garantía", content: "Todos nuestros productos tienen garantía de 12 a 24 meses. Incluye refacciones y mano de obra." },
-  { id: "qr5", title: "Despedida", content: "Fue un placer atenderte. Si tienes más preguntas, no dudes en escribirnos." },
+  { id: "qr1", title: "Saludo inicial", content: "Â¡Hola! Gracias por contactarnos. Â¿En quÃ© podemos ayudarte hoy?" },
+  { id: "qr2", title: "Solicitar datos", content: "Para ayudarte mejor, Â¿me podrÃ­as proporcionar tu nombre y telÃ©fono?" },
+  { id: "qr3", title: "Enviar catÃ¡logo", content: "Con gusto te compartimos nuestro catÃ¡logo. Â¿Lo prefieres por email o WhatsApp?" },
+  { id: "qr4", title: "GarantÃ­a", content: "Todos nuestros productos tienen garantÃ­a de 12 a 24 meses. Incluye refacciones y mano de obra." },
+  { id: "qr5", title: "Despedida", content: "Fue un placer atenderte. Si tienes mÃ¡s preguntas, no dudes en escribirnos." },
 ];
 
 const INITIAL_STAGES: SalesStage[] = [
   { id: "s1", name: "Nuevo Lead", color: "#3B82F6" },
   { id: "s2", name: "Contactado", color: "#06B6D4" },
   { id: "s3", name: "Cotizado", color: "#F59E0B" },
-  { id: "s4", name: "Negociación", color: "#F97316" },
+  { id: "s4", name: "NegociaciÃ³n", color: "#F97316" },
   { id: "s5", name: "Pago Pendiente", color: "#8B5CF6" },
   { id: "s6", name: "Vendido", color: "#10B981" },
   { id: "s7", name: "Perdido", color: "#EF4444" },
@@ -59,7 +69,7 @@ const PERMISSIONS = [
   { key: "sales", label: "Gestionar Ventas" },
   { key: "installations", label: "Gestionar Instalaciones" },
   { key: "reports", label: "Ver Reportes" },
-  { key: "settings", label: "Configuración" },
+  { key: "settings", label: "ConfiguraciÃ³n" },
 ];
 
 const ROLE_PERMISSIONS: Record<string, Record<string, boolean | "pro">> = {
@@ -71,9 +81,48 @@ const ROLE_PERMISSIONS: Record<string, Record<string, boolean | "pro">> = {
 };
 
 const PLANS = [
-  { name: "Básico", price: 299, color: "border-blue-200", features: ["1 usuario", "500 clientes", "Mensajería básica", "Dashboard", "Cotizaciones"] },
-  { name: "Pro", price: 599, color: "border-purple-400 shadow-purple-100 shadow-lg", badge: "Recomendado", features: ["5 usuarios", "Clientes ilimitados", "Omnicanal completo", "Instalaciones", "Garantías", "Meta Ads básico"] },
+  { name: "BÃ¡sico", price: 299, color: "border-blue-200", features: ["1 usuario", "500 clientes", "MensajerÃ­a bÃ¡sica", "Dashboard", "Cotizaciones"] },
+  { name: "Pro", price: 599, color: "border-purple-400 shadow-purple-100 shadow-lg", badge: "Recomendado", features: ["5 usuarios", "Clientes ilimitados", "Omnicanal completo", "Instalaciones", "GarantÃ­as", "Meta Ads bÃ¡sico"] },
   { name: "Premium", price: 999, color: "border-amber-300", features: ["Usuarios ilimitados", "Todo incluido", "Meta Ads avanzado", "API personalizada", "Soporte prioritario 24/7"] },
+];
+
+const META_INTEGRATIONS: MetaIntegration[] = [
+  {
+    id: "whatsapp",
+    name: "WhatsApp Business API",
+    channel: "WHATSAPP",
+    desc: "Recibe y responde WhatsApp desde el CRM, con agentes IA y asignacion por vendedor.",
+    status: "ready",
+    color: "border-green-200 bg-green-50/70 dark:bg-green-950/20",
+    requirements: ["Phone Number ID", "WhatsApp Business Account ID", "Permanent Access Token"],
+  },
+  {
+    id: "instagram",
+    name: "Instagram Messaging",
+    channel: "INSTAGRAM",
+    desc: "Centraliza mensajes directos, comentarios y leads organicos de Instagram.",
+    status: "pending",
+    color: "border-pink-200 bg-pink-50/70 dark:bg-pink-950/20",
+    requirements: ["Instagram Business Account", "Page ID conectada", "Permiso instagram_manage_messages"],
+  },
+  {
+    id: "messenger",
+    name: "Facebook Messenger",
+    channel: "MESSENGER",
+    desc: "Gestiona conversaciones de la pagina de Facebook desde la bandeja del CRM.",
+    status: "pending",
+    color: "border-blue-200 bg-blue-50/70 dark:bg-blue-950/20",
+    requirements: ["Facebook Page ID", "Page Access Token", "Webhook messages"],
+  },
+  {
+    id: "meta-ads",
+    name: "Meta Ads Lead Sync",
+    channel: "META_ADS",
+    desc: "Sincroniza formularios de leads, campanas y fuente de anuncios.",
+    status: "ready",
+    color: "border-indigo-200 bg-indigo-50/70 dark:bg-indigo-950/20",
+    requirements: ["Ad Account ID", "Leadgen webhook", "Permiso leads_retrieval"],
+  },
 ];
 
 const NAV_ITEMS = [
@@ -82,9 +131,9 @@ const NAV_ITEMS = [
   { id: "usuarios", label: "Usuarios", icon: Users },
   { id: "roles", label: "Roles y Permisos", icon: Shield },
   { id: "embudo", label: "Embudo de Ventas", icon: GitBranch },
-  { id: "respuestas", label: "Respuestas Rápidas", icon: MessageSquare },
+  { id: "respuestas", label: "Respuestas RÃ¡pidas", icon: MessageSquare },
   { id: "integraciones", label: "Integraciones", icon: Plug },
-  { id: "facturacion", label: "Planes y Facturación", icon: CreditCard },
+  { id: "facturacion", label: "Planes y FacturaciÃ³n", icon: CreditCard },
 ];
 
 const FONT_OPTIONS = [
@@ -141,29 +190,29 @@ const FONT_OPTIONS = [
 
 const CURRENCY_OPTIONS = [
   ["DOP", "Peso dominicano"],
-  ["USD", "Dólar estadounidense"],
+  ["USD", "DÃ³lar estadounidense"],
   ["MXN", "Peso mexicano"],
   ["COP", "Peso colombiano"],
   ["EUR", "Euro"],
-  ["CAD", "Dólar canadiense"],
+  ["CAD", "DÃ³lar canadiense"],
   ["GBP", "Libra esterlina"],
-  ["BRL", "Real brasileño"],
+  ["BRL", "Real brasileÃ±o"],
   ["ARS", "Peso argentino"],
   ["CLP", "Peso chileno"],
   ["PEN", "Sol peruano"],
-  ["CRC", "Colón costarricense"],
+  ["CRC", "ColÃ³n costarricense"],
   ["GTQ", "Quetzal guatemalteco"],
-  ["HNL", "Lempira hondureño"],
-  ["NIO", "Córdoba nicaragüense"],
-  ["PAB", "Balboa panameño"],
+  ["HNL", "Lempira hondureÃ±o"],
+  ["NIO", "CÃ³rdoba nicaragÃ¼ense"],
+  ["PAB", "Balboa panameÃ±o"],
   ["UYU", "Peso uruguayo"],
-  ["PYG", "Guaraní paraguayo"],
+  ["PYG", "GuaranÃ­ paraguayo"],
   ["BOB", "Boliviano"],
-  ["VES", "Bolívar venezolano"],
-  ["JPY", "Yen japonés"],
+  ["VES", "BolÃ­var venezolano"],
+  ["JPY", "Yen japonÃ©s"],
   ["CNY", "Yuan chino"],
   ["CHF", "Franco suizo"],
-  ["AUD", "Dólar australiano"],
+  ["AUD", "DÃ³lar australiano"],
 ];
 
 export default function SettingsPage() {
@@ -175,12 +224,22 @@ export default function SettingsPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [editQr, setEditQr] = useState<QuickReply | null>(null);
   const [qrForm, setQrForm] = useState({ title: "", content: "" });
-  const [company, setCompany] = useState({ name: "GreyCRM Demo", slug: "greycrm-demo", email: "admin@greycrm.com", phone: "+1 809 000 0000", address: "", city: "Santo Domingo", country: "República Dominicana", currency: "DOP", timezone: "America/Santo_Domingo" });
+  const [company, setCompany] = useState({ name: "GreyCRM Demo", slug: "greycrm-demo", email: "admin@greycrm.com", phone: "+1 809 000 0000", address: "", city: "Santo Domingo", country: "RepÃºblica Dominicana", currency: "DOP", timezone: "America/Santo_Domingo" });
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [appearance, setAppearance] = useState({ primaryColor: "#3B82F6", secondaryColor: "#8B5CF6", darkMode: false, crmName: "GreyCRM" });
   const [selectedTheme, setSelectedTheme] = useState<AppearanceThemeId>("grey");
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0].value);
   const [inviteForm, setInviteForm] = useState({ email: "", role: "SELLER" });
+  const [metaConfig, setMetaConfig] = useState({
+    appId: "",
+    businessId: "",
+    phoneNumberId: "",
+    pageId: "",
+    accessToken: "",
+    verifyToken: "greycrm_meta_verify",
+  });
+  const [connectedIntegrations, setConnectedIntegrations] = useState<string[]>(["meta-ads"]);
+  const [integrationNotice, setIntegrationNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedTheme(getStoredAppAppearance());
@@ -251,6 +310,24 @@ export default function SettingsPage() {
     setInviteForm({ email: "", role: "SELLER" });
   };
 
+  const webhookUrl = "https://greycrm-grey-management-s-projects.vercel.app/api/integrations/meta/webhook";
+  const toggleIntegration = (integration: MetaIntegration) => {
+    const hasBasicConfig = metaConfig.appId.trim() && (metaConfig.accessToken.trim() || integration.id === "meta-ads");
+    if (!hasBasicConfig) {
+      setIntegrationNotice("Completa App ID y Access Token para activar una conexion real. Para la demo, el flujo queda preparado.");
+      return;
+    }
+    setConnectedIntegrations((current) =>
+      current.includes(integration.id) ? current.filter((id) => id !== integration.id) : [...current, integration.id]
+    );
+    setIntegrationNotice(`${integration.name} actualizado. Los mensajes entraran por el webhook configurado.`);
+  };
+
+  const copyWebhook = async () => {
+    await navigator.clipboard?.writeText(webhookUrl);
+    setIntegrationNotice("Webhook copiado. Pegalo en Meta Developers > Webhooks.");
+  };
+
   const handleCompanyLogoUpload = (file?: File) => {
     if (!file) return;
     const reader = new FileReader();
@@ -276,7 +353,7 @@ export default function SettingsPage() {
   return (
     <div className="flex gap-0 min-h-screen">
       <aside className="w-64 border-r bg-muted/30 p-4 space-y-1 flex-shrink-0">
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">Configuración</div>
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">ConfiguraciÃ³n</div>
         {NAV_ITEMS.map(item => (
           <button key={item.id} onClick={() => setActiveTab(item.id)} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors", activeTab === item.id ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted")}>
             <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -289,21 +366,21 @@ export default function SettingsPage() {
 
         {activeTab === "empresa" && (
           <div className="space-y-6 max-w-2xl">
-            <div><h2 className="text-xl font-bold">Empresa</h2><p className="text-muted-foreground text-sm">Información general de tu negocio</p></div>
+            <div><h2 className="text-xl font-bold">Empresa</h2><p className="text-muted-foreground text-sm">InformaciÃ³n general de tu negocio</p></div>
             <Card><CardContent className="pt-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1"><label className="text-sm font-medium">Nombre de la empresa</label><Input value={company.name} onChange={e => setCompany(c => ({ ...c, name: e.target.value }))} /></div>
                 <div className="space-y-1"><label className="text-sm font-medium">Subdominio / Slug</label><Input value={company.slug} onChange={e => setCompany(c => ({ ...c, slug: e.target.value }))} /></div>
                 <div className="space-y-1"><label className="text-sm font-medium">Email principal</label><Input type="email" value={company.email} onChange={e => setCompany(c => ({ ...c, email: e.target.value }))} /></div>
-                <div className="space-y-1"><label className="text-sm font-medium">Teléfono</label><Input value={company.phone} onChange={e => setCompany(c => ({ ...c, phone: e.target.value }))} /></div>
+                <div className="space-y-1"><label className="text-sm font-medium">TelÃ©fono</label><Input value={company.phone} onChange={e => setCompany(c => ({ ...c, phone: e.target.value }))} /></div>
                 <div className="space-y-1"><label className="text-sm font-medium">Ciudad</label><Input value={company.city} onChange={e => setCompany(c => ({ ...c, city: e.target.value }))} /></div>
-                <div className="space-y-1"><label className="text-sm font-medium">País</label><Input value={company.country} onChange={e => setCompany(c => ({ ...c, country: e.target.value }))} /></div>
+                <div className="space-y-1"><label className="text-sm font-medium">PaÃ­s</label><Input value={company.country} onChange={e => setCompany(c => ({ ...c, country: e.target.value }))} /></div>
                 <div className="space-y-1"><label className="text-sm font-medium">Moneda</label>
                   <Select value={company.currency} onValueChange={v => setCompany(c => ({ ...c, currency: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-72">
                       {CURRENCY_OPTIONS.map(([code, label]) => (
-                        <SelectItem key={code} value={code}>{code} — {label}</SelectItem>
+                        <SelectItem key={code} value={code}>{code} â€” {label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -312,12 +389,12 @@ export default function SettingsPage() {
                   <Select value={company.timezone} onValueChange={v => setCompany(c => ({ ...c, timezone: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-80">
-                      <SelectItem value="America/Santo_Domingo">República Dominicana (UTC-4)</SelectItem>
+                      <SelectItem value="America/Santo_Domingo">RepÃºblica Dominicana (UTC-4)</SelectItem>
                       <SelectItem value="America/New_York">Nueva York / Este (UTC-5)</SelectItem>
-                      <SelectItem value="America/Mexico_City">Ciudad de México (UTC-6)</SelectItem>
-                      <SelectItem value="America/Bogota">Bogotá (UTC-5)</SelectItem>
+                      <SelectItem value="America/Mexico_City">Ciudad de MÃ©xico (UTC-6)</SelectItem>
+                      <SelectItem value="America/Bogota">BogotÃ¡ (UTC-5)</SelectItem>
                       <SelectItem value="America/Lima">Lima (UTC-5)</SelectItem>
-                      <SelectItem value="America/Panama">Panamá (UTC-5)</SelectItem>
+                      <SelectItem value="America/Panama">PanamÃ¡ (UTC-5)</SelectItem>
                       <SelectItem value="Europe/Madrid">Madrid (UTC+1)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -326,7 +403,7 @@ export default function SettingsPage() {
               <div className="space-y-1">
                 <label className="text-sm font-medium">Logo</label>
                 <div className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:border-primary transition-colors">
-                  <div className="text-muted-foreground text-sm">Arrastra tu logo aquí o <span className="text-primary font-medium">haz clic para seleccionar</span></div>
+                  <div className="text-muted-foreground text-sm">Arrastra tu logo aquÃ­ o <span className="text-primary font-medium">haz clic para seleccionar</span></div>
                   <div className="text-xs text-muted-foreground mt-1">PNG, JPG hasta 2MB</div>
                 </div>
               </div>
@@ -356,7 +433,7 @@ export default function SettingsPage() {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium">Apariencias listas</label>
-                  <p className="text-xs text-muted-foreground mt-0.5">Elige una estética para adaptar el CRM a cada empresa.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Elige una estÃ©tica para adaptar el CRM a cada empresa.</p>
                 </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   {APPEARANCE_THEMES.map((theme) => (
@@ -398,7 +475,7 @@ export default function SettingsPage() {
                 <div className="rounded-lg border bg-muted/30 p-4" style={{ fontFamily: selectedFont }}>
                   <div className="text-xs text-muted-foreground mb-2">Vista previa de fuente</div>
                   <div className="text-xl font-bold">GreyCRM Operaciones</div>
-                  <div className="text-sm text-muted-foreground mt-1">Clientes, ventas, inventario y técnicos en un solo lugar.</div>
+                  <div className="text-sm text-muted-foreground mt-1">Clientes, ventas, inventario y tÃ©cnicos en un solo lugar.</div>
                 </div>
               </div>
 
@@ -473,7 +550,7 @@ export default function SettingsPage() {
 
         {activeTab === "roles" && (
           <div className="space-y-4">
-            <div><h2 className="text-xl font-bold">Roles y Permisos</h2><p className="text-muted-foreground text-sm">Define qué puede hacer cada rol</p></div>
+            <div><h2 className="text-xl font-bold">Roles y Permisos</h2><p className="text-muted-foreground text-sm">Define quÃ© puede hacer cada rol</p></div>
             <Card>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -492,7 +569,7 @@ export default function SettingsPage() {
                           return (
                             <td key={role} className="p-4 text-center">
                               {val === true && <Check className="w-4 h-4 text-green-500 mx-auto" />}
-                              {val === false && <span className="text-muted-foreground text-xs">—</span>}
+                              {val === false && <span className="text-muted-foreground text-xs">â€”</span>}
                               {val === "pro" && <div className="flex items-center justify-center gap-1"><Lock className="w-3 h-3 text-amber-500" /><span className="text-xs text-amber-600">Pro</span></div>}
                             </td>
                           );
@@ -531,7 +608,7 @@ export default function SettingsPage() {
         {activeTab === "respuestas" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div><h2 className="text-xl font-bold">Respuestas Rápidas</h2><p className="text-muted-foreground text-sm">Respuestas predefinidas para agilizar atención</p></div>
+              <div><h2 className="text-xl font-bold">Respuestas RÃ¡pidas</h2><p className="text-muted-foreground text-sm">Respuestas predefinidas para agilizar atenciÃ³n</p></div>
               <Button onClick={() => openQrEdit(null)} className="gap-2"><Plus className="w-4 h-4" />Nueva Respuesta</Button>
             </div>
             <div className="space-y-3">
@@ -555,41 +632,65 @@ export default function SettingsPage() {
 
         {activeTab === "integraciones" && (
           <div className="space-y-4">
-            <div><h2 className="text-xl font-bold">Integraciones</h2><p className="text-muted-foreground text-sm">Conecta tus canales y herramientas</p></div>
+            <div><h2 className="text-xl font-bold">Integraciones Meta</h2><p className="text-muted-foreground text-sm">Conecta WhatsApp, Instagram, Messenger y Meta Ads al CRM.</p></div>
+            {integrationNotice && <div className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">{integrationNotice}</div>}
+            <Card className="border-blue-200 bg-blue-50/70 dark:bg-blue-950/20">
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plug className="w-5 h-5 text-blue-600" />Configuracion de Meta Developers</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="space-y-1"><label className="text-sm font-medium">Meta App ID</label><Input value={metaConfig.appId} onChange={e => setMetaConfig(v => ({ ...v, appId: e.target.value }))} placeholder="1234567890" /></div>
+                  <div className="space-y-1"><label className="text-sm font-medium">Business ID</label><Input value={metaConfig.businessId} onChange={e => setMetaConfig(v => ({ ...v, businessId: e.target.value }))} placeholder="Business Manager ID" /></div>
+                  <div className="space-y-1"><label className="text-sm font-medium">Phone Number ID</label><Input value={metaConfig.phoneNumberId} onChange={e => setMetaConfig(v => ({ ...v, phoneNumberId: e.target.value }))} placeholder="WhatsApp Phone Number ID" /></div>
+                  <div className="space-y-1"><label className="text-sm font-medium">Facebook Page ID</label><Input value={metaConfig.pageId} onChange={e => setMetaConfig(v => ({ ...v, pageId: e.target.value }))} placeholder="Page ID" /></div>
+                  <div className="space-y-1 md:col-span-2"><label className="text-sm font-medium">Access Token</label><Input type="password" value={metaConfig.accessToken} onChange={e => setMetaConfig(v => ({ ...v, accessToken: e.target.value }))} placeholder="Token permanente de Meta" /></div>
+                </div>
+                <div className="grid gap-3 rounded-xl border bg-background/80 p-3 md:grid-cols-[1fr_auto] md:items-center">
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">Webhook publico</div>
+                    <div className="break-all text-sm font-medium">{webhookUrl}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">Verify token: {metaConfig.verifyToken}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={copyWebhook} className="gap-2"><Copy className="w-4 h-4" />Copiar</Button>
+                    <a href="https://developers.facebook.com/apps/" target="_blank" rel="noreferrer"><Button size="sm" className="gap-2"><ExternalLink className="w-4 h-4" />Meta</Button></a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             <div className="grid lg:grid-cols-2 gap-4">
-              {[
-                { name: "WhatsApp Business API", icon: "💬", desc: "Envía y recibe mensajes de WhatsApp directamente en el CRM. Activa chatbots, respuestas automáticas y seguimiento.", color: "bg-green-50 border-green-200" },
-                { name: "Instagram Messaging", icon: "📸", desc: "Gestiona mensajes directos y comentarios de Instagram en un solo lugar.", color: "bg-pink-50 border-pink-200" },
-                { name: "Facebook Messenger", icon: "💙", desc: "Responde mensajes de tu página de Facebook y gestiona leads desde Messenger.", color: "bg-blue-50 border-blue-200" },
-                { name: "Meta Ads API", icon: "📊", desc: "Sincroniza campañas y leads de Meta Ads (Facebook e Instagram) automáticamente.", color: "bg-indigo-50 border-indigo-200" },
-              ].map(integration => (
-                <Card key={integration.name} className={`border ${integration.color}`}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">{integration.icon}</div>
-                        <div>
-                          <div className="font-semibold text-sm">{integration.name}</div>
-                          <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 mt-1">No conectado</Badge>
+              {META_INTEGRATIONS.map(integration => {
+                const connected = connectedIntegrations.includes(integration.id);
+                return (
+                  <Card key={integration.id} className={`border ${integration.color}`}>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <ChannelLogo channel={integration.channel} className="h-9 w-9 text-base" />
+                          <div>
+                            <div className="font-semibold text-sm">{integration.name}</div>
+                            <Badge variant="outline" className={cn("text-xs mt-1", connected ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-gray-100 text-gray-600")}>{connected ? "Conectado demo" : integration.status === "ready" ? "Listo para conectar" : "Pendiente credenciales"}</Badge>
+                          </div>
                         </div>
+                        <Button size="sm" variant={connected ? "default" : "outline"} onClick={() => toggleIntegration(integration)}>{connected ? "Activo" : "Conectar"}</Button>
                       </div>
-                      <Button size="sm" variant="outline">Conectar</Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-3">{integration.desc}</p>
-                  </CardContent>
-                </Card>
-              ))}
+                      <p className="text-xs text-muted-foreground mt-3">{integration.desc}</p>
+                      <div className="mt-4 space-y-2">
+                        {integration.requirements.map(req => <div key={req} className="flex items-center gap-2 text-xs text-muted-foreground"><CheckCircle2 className={cn("w-3.5 h-3.5", connected ? "text-emerald-500" : "text-slate-400")} />{req}</div>)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
-
         {activeTab === "facturacion" && (
           <div className="space-y-6">
-            <div><h2 className="text-xl font-bold">Planes y Facturación</h2><p className="text-muted-foreground text-sm">Gestiona tu suscripción</p></div>
+            <div><h2 className="text-xl font-bold">Planes y FacturaciÃ³n</h2><p className="text-muted-foreground text-sm">Gestiona tu suscripciÃ³n</p></div>
             <Card className="border-blue-200 bg-blue-50/50">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
-                  <div><div className="font-semibold">Plan actual</div><div className="text-2xl font-bold text-blue-600 mt-1">Starter — Demo</div><div className="text-sm text-muted-foreground mt-1">Período de prueba gratuita</div></div>
+                  <div><div className="font-semibold">Plan actual</div><div className="text-2xl font-bold text-blue-600 mt-1">Starter â€” Demo</div><div className="text-sm text-muted-foreground mt-1">PerÃ­odo de prueba gratuita</div></div>
                   <Badge className="bg-blue-600">Activo</Badge>
                 </div>
               </CardContent>
@@ -610,7 +711,7 @@ export default function SettingsPage() {
                       ))}
                     </ul>
                     <Button className={`w-full ${plan.badge ? "bg-purple-600 hover:bg-purple-700" : ""}`}>
-                      {plan.name === "Básico" ? "Seleccionar" : `Actualizar a ${plan.name}`}
+                      {plan.name === "BÃ¡sico" ? "Seleccionar" : `Actualizar a ${plan.name}`}
                     </Button>
                   </CardContent>
                 </Card>
@@ -636,17 +737,17 @@ export default function SettingsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-            <Button onClick={inviteUser} disabled={!inviteForm.email}><Check className="w-4 h-4 mr-2" />Enviar invitación</Button>
+            <Button onClick={inviteUser} disabled={!inviteForm.email}><Check className="w-4 h-4 mr-2" />Enviar invitaciÃ³n</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editQr ? "Editar Respuesta" : "Nueva Respuesta Rápida"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editQr ? "Editar Respuesta" : "Nueva Respuesta RÃ¡pida"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-1"><label className="text-sm font-medium">Título</label><Input value={qrForm.title} onChange={e => setQrForm(f => ({ ...f, title: e.target.value }))} placeholder="Nombre corto de la respuesta" /></div>
-            <div className="space-y-1"><label className="text-sm font-medium">Contenido</label><Textarea value={qrForm.content} onChange={e => setQrForm(f => ({ ...f, content: e.target.value }))} placeholder="Texto de la respuesta rápida..." rows={4} /></div>
+            <div className="space-y-1"><label className="text-sm font-medium">TÃ­tulo</label><Input value={qrForm.title} onChange={e => setQrForm(f => ({ ...f, title: e.target.value }))} placeholder="Nombre corto de la respuesta" /></div>
+            <div className="space-y-1"><label className="text-sm font-medium">Contenido</label><Textarea value={qrForm.content} onChange={e => setQrForm(f => ({ ...f, content: e.target.value }))} placeholder="Texto de la respuesta rÃ¡pida..." rows={4} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setQrOpen(false)}>Cancelar</Button>
@@ -657,3 +758,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

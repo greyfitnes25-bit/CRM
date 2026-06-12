@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Clock,
   Gauge,
+  Loader2,
   MessageCircle,
   MessageSquareText,
   Pause,
@@ -155,14 +156,41 @@ export default function AiAgentsPage() {
   const [prompt, setPrompt] = useState(
     "Hola, estoy interesado en instalar camaras en mi negocio. Necesito precio y disponibilidad para esta semana."
   );
+  const [analysis, setAnalysis] = useState({
+    intent: "Cotizacion",
+    priority: "Media",
+    qualityScore: 92,
+    leadScore: 86,
+    reply: "Hola, gracias por escribir a GreyCRM Demo. Con gusto te ayudo. Para cotizarte correctamente necesito la ubicacion, cantidad de camaras y si ya tienes internet en el local. Tenemos disponibilidad esta semana y puedo pasarte una propuesta hoy.",
+    actions: ["Asignar vendedor disponible", "Crear cotizacion preliminar", "Guardar resumen en la ficha del cliente"],
+    summary: "Intencion detectada: Cotizacion. Prioridad Media. Lead score 86%.",
+  });
+  const [analyzing, setAnalyzing] = useState(false);
+  const [agentNotice, setAgentNotice] = useState<string | null>(null);
 
   const selected = useMemo(
     () => agents.find((agent) => agent.name === selectedAgent) ?? agents[0],
     [selectedAgent]
   );
 
-  const suggestedReply =
-    "Hola, gracias por escribir a GreyCRM Demo. Con gusto te ayudo. Para cotizarte correctamente necesito la ubicacion, cantidad de camaras y si ya tienes internet en el local. Tenemos disponibilidad esta semana y puedo pasarte una propuesta hoy.";
+  const runAgent = async () => {
+    setAnalyzing(true);
+    setAgentNotice(null);
+    try {
+      const response = await fetch("/api/ai/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent: selected.name, message: prompt }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "No se pudo analizar el mensaje.");
+      setAnalysis(data);
+    } catch (error) {
+      setAgentNotice(error instanceof Error ? error.message : "No se pudo analizar el mensaje.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -178,16 +206,22 @@ export default function AiAgentsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => setAgentNotice("Reporte demo generado: calidad 92%, prioridad alta en 7 chats y 18 leads calientes.")}>
             <BarChart3 className="h-4 w-4" />
             Ver reporte
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setAgentNotice("Nuevo agente preparado. En produccion se abre el asistente de configuracion por canal.")}>
             <Zap className="h-4 w-4" />
             Nuevo agente
           </Button>
         </div>
       </div>
+
+      {agentNotice && (
+        <div className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
+          {agentNotice}
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((item) => (
@@ -281,25 +315,44 @@ export default function AiAgentsPage() {
                 <div className="rounded-xl border bg-muted/30 p-3">
                   <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Mensaje entrante</p>
                   <Textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} className="min-h-24 resize-none bg-background" />
+                  <Button onClick={runAgent} disabled={analyzing} className="mt-3 w-full gap-2">
+                    {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Analizar con {selected.name}
+                  </Button>
                 </div>
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-600">
                     <Bot className="h-4 w-4" />
                     Respuesta sugerida
                   </div>
-                  <p className="text-sm leading-relaxed">{suggestedReply}</p>
+                  <p className="text-sm leading-relaxed">{analysis.reply}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-xl border p-3">
                     <p className="text-muted-foreground">Intencion</p>
-                    <p className="font-semibold text-emerald-500">Alta</p>
+                    <p className="font-semibold text-emerald-500">{analysis.intent}</p>
                   </div>
                   <div className="rounded-xl border p-3">
-                    <p className="text-muted-foreground">Proxima accion</p>
-                    <p className="font-semibold">Cotizar hoy</p>
+                    <p className="text-muted-foreground">Prioridad</p>
+                    <p className="font-semibold">{analysis.priority}</p>
                   </div>
                 </div>
-                <Button className="w-full gap-2">
+                <div className="rounded-xl border p-3">
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Lead score</span>
+                    <span className="font-semibold">{analysis.leadScore}%</span>
+                  </div>
+                  <Progress value={analysis.leadScore} />
+                </div>
+                <div className="space-y-2">
+                  {analysis.actions.map((action) => (
+                    <div key={action} className="flex items-center gap-2 rounded-lg border bg-background/60 px-3 py-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      {action}
+                    </div>
+                  ))}
+                </div>
+                <Button className="w-full gap-2" onClick={() => setAgentNotice("Conversacion enviada a revision humana y registrada en la bitacora demo.")}>
                   Enviar a revision humana
                   <ChevronRight className="h-4 w-4" />
                 </Button>
