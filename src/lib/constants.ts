@@ -145,6 +145,7 @@ export const NAV_ITEMS = [
   { href: "/quotes", label: "Cotizaciones", icon: "FileText" },
   { href: "/sales", label: "Ventas", icon: "ShoppingCart" },
   { href: "/installations", label: "Instalaciones", icon: "Wrench" },
+  { href: "/team-map", label: "Mapa Equipo", icon: "Map" },
   { href: "/warranties", label: "Garantías", icon: "Shield" },
   { href: "/returns", label: "Devoluciones", icon: "RotateCcw" },
   { href: "/meta-ads", label: "Meta Ads", icon: "TrendingUp" },

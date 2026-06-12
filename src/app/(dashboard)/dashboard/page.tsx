@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   TrendingUp,
   TrendingDown,
@@ -42,6 +43,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn, formatCurrency, getInitials } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ChannelLogo, type ChannelLogoId } from "@/components/common/channel-logo";
 
 // Simulated data
 const revenueData = [
@@ -63,12 +65,12 @@ const monthlyData = [
   { mes: "Jun", ventas: 125000, meta: 120000 },
 ];
 
-const leadsByChannel = [
-  { name: "WhatsApp", value: 42, color: "#25D366" },
-  { name: "Instagram", value: 28, color: "#E1306C" },
-  { name: "Meta Ads", value: 18, color: "#1877F2" },
-  { name: "Referidos", value: 8, color: "#F59E0B" },
-  { name: "Web", value: 4, color: "#6366F1" },
+const leadsByChannel: Array<{ key: ChannelLogoId; name: string; value: number; color: string }> = [
+  { key: "WHATSAPP", name: "WhatsApp", value: 42, color: "#25D366" },
+  { key: "INSTAGRAM", name: "Instagram", value: 28, color: "#E1306C" },
+  { key: "META_ADS", name: "Meta Ads", value: 18, color: "#1877F2" },
+  { key: "REFERRAL", name: "Referidos", value: 8, color: "#F59E0B" },
+  { key: "WEB", name: "Web", value: 4, color: "#6366F1" },
 ];
 
 const funnelData = [
@@ -146,6 +148,10 @@ const metricCards = [
     color: "text-blue-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/30",
     borderColor: "border-blue-100 dark:border-blue-900/30",
+    cardBg: "bg-gradient-to-br from-blue-50/95 via-white to-sky-50/80 dark:from-blue-950/30 dark:via-card dark:to-sky-950/20",
+    accent: "bg-blue-500",
+    shadowColor: "shadow-blue-100/70 dark:shadow-blue-950/10",
+    href: "/leads",
   },
   {
     title: "Ventas del Mes",
@@ -156,6 +162,10 @@ const metricCards = [
     color: "text-green-500",
     bgColor: "bg-green-50 dark:bg-green-950/30",
     borderColor: "border-green-100 dark:border-green-900/30",
+    cardBg: "bg-gradient-to-br from-emerald-50/95 via-white to-green-50/80 dark:from-emerald-950/30 dark:via-card dark:to-green-950/20",
+    accent: "bg-emerald-500",
+    shadowColor: "shadow-emerald-100/70 dark:shadow-emerald-950/10",
+    href: "/sales",
   },
   {
     title: "Conversaciones",
@@ -166,6 +176,10 @@ const metricCards = [
     color: "text-purple-500",
     bgColor: "bg-purple-50 dark:bg-purple-950/30",
     borderColor: "border-purple-100 dark:border-purple-900/30",
+    cardBg: "bg-gradient-to-br from-purple-50/95 via-white to-fuchsia-50/80 dark:from-purple-950/30 dark:via-card dark:to-fuchsia-950/20",
+    accent: "bg-purple-500",
+    shadowColor: "shadow-purple-100/70 dark:shadow-purple-950/10",
+    href: "/messages",
   },
   {
     title: "Campañas Activas",
@@ -176,6 +190,10 @@ const metricCards = [
     color: "text-indigo-500",
     bgColor: "bg-indigo-50 dark:bg-indigo-950/30",
     borderColor: "border-indigo-100 dark:border-indigo-900/30",
+    cardBg: "bg-gradient-to-br from-indigo-50/95 via-white to-blue-50/80 dark:from-indigo-950/30 dark:via-card dark:to-blue-950/20",
+    accent: "bg-indigo-500",
+    shadowColor: "shadow-indigo-100/70 dark:shadow-indigo-950/10",
+    href: "/meta-ads",
   },
   {
     title: "Instalaciones",
@@ -186,6 +204,10 @@ const metricCards = [
     color: "text-yellow-500",
     bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
     borderColor: "border-yellow-100 dark:border-yellow-900/30",
+    cardBg: "bg-gradient-to-br from-amber-50/95 via-white to-yellow-50/80 dark:from-amber-950/30 dark:via-card dark:to-yellow-950/20",
+    accent: "bg-amber-500",
+    shadowColor: "shadow-amber-100/70 dark:shadow-amber-950/10",
+    href: "/installations",
   },
   {
     title: "Garantías Activas",
@@ -196,10 +218,61 @@ const metricCards = [
     color: "text-teal-500",
     bgColor: "bg-teal-50 dark:bg-teal-950/30",
     borderColor: "border-teal-100 dark:border-teal-900/30",
+    cardBg: "bg-gradient-to-br from-teal-50/95 via-white to-cyan-50/80 dark:from-teal-950/30 dark:via-card dark:to-cyan-950/20",
+    accent: "bg-teal-500",
+    shadowColor: "shadow-teal-100/70 dark:shadow-teal-950/10",
+    href: "/warranties",
   },
 ];
 
 const COLORS = ["#25D366", "#E1306C", "#1877F2", "#F59E0B", "#6366F1"];
+
+function polarToCartesian(cx: number, cy: number, radius: number, angleInDegrees: number) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180;
+  return {
+    x: cx + radius * Math.cos(angleInRadians),
+    y: cy + radius * Math.sin(angleInRadians),
+  };
+}
+
+function describeArc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number) {
+  const start = polarToCartesian(cx, cy, radius, endAngle);
+  const end = polarToCartesian(cx, cy, radius, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+}
+
+function describeDonutSegment(cx: number, cy: number, outerRadius: number, innerRadius: number, startAngle: number, endAngle: number) {
+  const outerStart = polarToCartesian(cx, cy, outerRadius, endAngle);
+  const outerEnd = polarToCartesian(cx, cy, outerRadius, startAngle);
+  const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle);
+  const innerEnd = polarToCartesian(cx, cy, innerRadius, endAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 0 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerStart.x} ${innerStart.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${innerEnd.x} ${innerEnd.y}`,
+    "Z",
+  ].join(" ");
+}
+
+const channelRingSegments = (() => {
+  let angle = 0;
+  const gap = 4;
+  return leadsByChannel.map((entry) => {
+    const sweep = (entry.value / 100) * 360;
+    const start = angle + gap / 2;
+    const end = angle + sweep - gap / 2;
+    angle += sweep;
+    return {
+      ...entry,
+      arc: describeArc(120, 120, 78, start + 3, Math.max(start + 8, end - 3)),
+      segmentPath: describeDonutSegment(120, 120, 93, 66, start, Math.max(start + 5, end)),
+    };
+  });
+})();
 
 function MetricCard({
   title,
@@ -210,13 +283,25 @@ function MetricCard({
   color,
   bgColor,
   borderColor,
+  cardBg,
+  accent,
+  shadowColor,
+  href,
 }: (typeof metricCards)[0]) {
   const isPositive = change > 0;
   const isNeutral = change === 0;
 
   return (
-    <Card className={cn("border card-hover", borderColor)}>
-      <CardContent className="p-5">
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => { window.location.href = href; }}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") window.location.href = href; }}
+      className={cn("relative overflow-hidden border card-hover shadow-sm cursor-pointer", borderColor, cardBg, shadowColor)}
+    >
+      <span className={cn("absolute inset-x-0 top-0 h-1", accent)} />
+      <span className={cn("absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-15 blur-2xl", accent)} />
+      <CardContent className="relative p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-sm text-muted-foreground font-medium">{title}</p>
@@ -242,7 +327,7 @@ function MetricCard({
               <span className="text-xs text-muted-foreground">{subValue}</span>
             </div>
           </div>
-          <div className={cn("p-3 rounded-xl", bgColor)}>
+          <div className={cn("p-3 rounded-xl ring-1 ring-white/70 shadow-sm", bgColor)}>
             <Icon className={cn("w-5 h-5", color)} />
           </div>
         </div>
@@ -271,6 +356,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const today = format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es });
   const hour = new Date().getHours();
   const greeting =
@@ -287,11 +373,11 @@ export default function DashboardPage() {
           <p className="text-muted-foreground text-sm capitalize">{today}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => router.push("/sales")}>
             <Calendar className="w-4 h-4" />
             Este mes
           </Button>
-          <Button size="sm" className="gap-2">
+          <Button size="sm" className="gap-2" onClick={() => router.push("/sales")}>
             <Activity className="w-4 h-4" />
             Ver reporte
           </Button>
@@ -361,40 +447,106 @@ export default function DashboardPage() {
         </Card>
 
         {/* Leads by channel pie */}
-        <Card>
-          <CardHeader className="pb-4">
+        <Card className="channel-space-card relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 z-[12] hidden dark:block" aria-hidden="true">
+            <span className="shooting-star shooting-star-one absolute -left-12 top-24" />
+            <span className="shooting-star shooting-star-two absolute left-12 top-48" />
+            <img
+              src="/space/planets-realistic.png"
+              alt=""
+              className="space-planets-realistic absolute -right-28 top-12 h-36 w-[250px] object-contain opacity-45"
+            />
+            <img
+              src="/space/shuttle-side-realistic-cropped.png"
+              alt=""
+              className="space-shuttle-realistic absolute -right-20 top-20 h-14 w-32 object-contain"
+            />
+            <div className="space-astronaut-realistic absolute -left-1 top-28 h-28 w-24">
+              <img src="/space/astronaut-realistic.png" alt="" className="space-astronaut-pose space-astronaut-pose-float absolute inset-0 h-full w-full object-contain" />
+              <img src="/space/astronaut-wave-realistic.png" alt="" className="space-astronaut-pose space-astronaut-pose-wave absolute inset-0 h-full w-full object-contain" />
+            </div>
+          </div>
+          <div className="pointer-events-none absolute inset-0 z-[12] block dark:hidden" aria-hidden="true">
+            <span className="day-orb day-orb-primary absolute right-8 top-10" />
+            <span className="day-orb day-orb-secondary absolute left-10 top-28" />
+            <span className="day-signal day-signal-one absolute right-16 top-28" />
+            <span className="day-signal day-signal-two absolute left-20 bottom-20" />
+            <span className="day-glider absolute -left-12 top-24" />
+          </div>
+          <CardHeader className="relative z-20 pb-4">
             <CardTitle className="text-base">Leads por Canal</CardTitle>
-            <CardDescription>Distribución de fuentes</CardDescription>
+            <CardDescription>Distribución de canales</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={leadsByChannel}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {leadsByChannel.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+          <CardContent className="relative z-10">
+            <div className="channel-chart-shell relative mx-auto h-[252px] max-w-[280px] overflow-visible rounded-2xl">
+              <div className="pointer-events-none absolute inset-4 rounded-full bg-sky-200/30 blur-3xl dark:bg-slate-950/60" />
+              <svg viewBox="0 0 240 240" className="relative z-10 h-full w-full overflow-visible">
+                <defs>
+                  <filter id="hud-cyan-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="2.6" floodColor="var(--channel-glow)" floodOpacity="0.75" />
+                  </filter>
+                  {leadsByChannel.map((entry) => (
+                    <filter key={entry.key} id={`hud-glow-${entry.key}`} x="-50%" y="-50%" width="200%" height="200%">
+                      <feDropShadow dx="0" dy="0" stdDeviation="4.5" floodColor={entry.color} floodOpacity="0.95" />
+                      <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor={entry.color} floodOpacity="0.35" />
+                    </filter>
                   ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any) => [`${value}%`, "Porcentaje"]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+                  <radialGradient id="hud-center" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="var(--channel-center-a)" stopOpacity="0.98" />
+                    <stop offset="65%" stopColor="var(--channel-center-b)" stopOpacity="0.94" />
+                    <stop offset="100%" stopColor="var(--channel-center-c)" stopOpacity="0.22" />
+                  </radialGradient>
+                </defs>
+
+                <g className="hud-orbit-slow">
+                  <circle cx="120" cy="120" r="104" fill="none" stroke="var(--channel-orbit)" strokeWidth="1" opacity="0.28" strokeDasharray="22 18 2 14" />
+                  <circle cx="120" cy="120" r="96" fill="none" stroke="var(--channel-glow)" strokeWidth="1.4" opacity="0.22" filter="url(#hud-cyan-glow)" strokeDasharray="80 28" />
+                </g>
+                <circle cx="120" cy="120" r="62" fill="url(#hud-center)" stroke="var(--channel-center-stroke)" strokeWidth="1.2" opacity="0.97" />
+                <circle cx="120" cy="120" r="52" fill="none" stroke="var(--channel-orbit)" strokeDasharray="2 6" strokeWidth="1" opacity="0.45" />
+                <circle className="hud-scan-line" cx="120" cy="120" r="73" fill="none" stroke="var(--channel-glow)" strokeDasharray="20 210" strokeWidth="1.5" opacity="0.34" filter="url(#hud-cyan-glow)" />
+
+                <g>
+                  <circle cx="120" cy="120" r="79" fill="none" stroke="var(--channel-track)" strokeWidth="28" opacity="0.62" />
+                  {channelRingSegments.map((segment) => (
+                    <path
+                      key={segment.key}
+                      className="hud-segment"
+                      d={segment.segmentPath}
+                      fill={segment.color}
+                      filter={`url(#hud-glow-${segment.key})`}
+                      opacity="0.96"
+                      style={{ animationDelay: `${channelRingSegments.findIndex((item) => item.key === segment.key) * 0.18}s` }}
+                    >
+                      <title>{`${segment.name}: ${segment.value}%`}</title>
+                    </path>
+                  ))}
+                  {channelRingSegments.map((segment) => (
+                    <path
+                      key={`${segment.key}-core`}
+                      d={segment.arc}
+                      fill="none"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      opacity="0.42"
+                    />
+                  ))}
+                </g>
+
+                <path d="M48 42h-10v14M192 42h10v14M48 198h-10v-14M192 198h10v-14" fill="none" stroke="var(--channel-orbit)" strokeWidth="1.4" opacity="0.42" />
+                <path className="hud-flicker" d="M120 40v10M120 190v10M40 120h10M190 120h10" stroke="var(--channel-glow)" strokeWidth="1.6" opacity="0.45" filter="url(#hud-cyan-glow)" />
+
+                <text x="120" y="111" textAnchor="middle" fill="var(--channel-label)" fontSize="11" letterSpacing="3" fontWeight="600">TOTAL</text>
+                <text x="120" y="137" textAnchor="middle" fill="var(--channel-total)" fontSize="31" fontWeight="800" filter="url(#hud-cyan-glow)">100%</text>
+                <text x="120" y="155" textAnchor="middle" fill="var(--channel-caption)" fontSize="10" letterSpacing="1.6">canales activos</text>
+              </svg>
+            </div>
             <div className="space-y-2 mt-2">
               {leadsByChannel.map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
+                <div key={item.name} className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: item.color }}
-                    />
+                    <ChannelLogo channel={item.key} className="h-5 w-5" />
                     <span className="text-muted-foreground">{item.name}</span>
                   </div>
                   <span className="font-medium tabular-nums">{item.value}%</span>

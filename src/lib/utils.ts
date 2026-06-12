@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { APP_CURRENCY, APP_LOCALE, APP_TIME_ZONE } from "@/lib/regional";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,8 +10,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   amount: number,
-  currency: string = "USD",
-  locale: string = "en-US"
+  currency: string = APP_CURRENCY,
+  locale: string = APP_LOCALE
 ): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
@@ -23,6 +24,25 @@ export function formatCurrency(
 export function formatDate(date: Date | string, formatStr: string = "MMM d, yyyy"): string {
   const d = typeof date === "string" ? parseISO(date) : date;
   return format(d, formatStr, { locale: es });
+}
+
+export function formatDateDO(date: Date | string): string {
+  const d = typeof date === "string" ? parseISO(date) : date;
+  return new Intl.DateTimeFormat(APP_LOCALE, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: APP_TIME_ZONE,
+  }).format(d);
+}
+
+export function formatTimeDO(date: Date | string): string {
+  const d = typeof date === "string" ? parseISO(date) : date;
+  return new Intl.DateTimeFormat(APP_LOCALE, {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: APP_TIME_ZONE,
+  }).format(d);
 }
 
 export function formatDateRelative(date: Date | string): string {

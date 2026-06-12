@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Plus, Filter, Phone, MessageCircle, Eye, Edit2, ArrowLeft,
@@ -63,7 +63,7 @@ const EMPTY_FORM: Omit<Customer, "id" | "lastActivity" | "conversations" | "quot
 };
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("ALL");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -72,7 +72,37 @@ export default function CustomersPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [tagInput, setTagInput] = useState("");
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const perPage = 10;
+
+  const formatActivity = (value: string) => {
+    if (!value) return "Sin actividad";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const loadCustomers = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/customers", { cache: "no-store" });
+      if (!res.ok) throw new Error((await res.json()).error || "No se pudieron cargar los clientes");
+      const data = await res.json();
+      setCustomers(data.map((c: Customer) => ({ ...c, lastActivity: formatActivity(c.lastActivity) })));
+    } catch (err: any) {
+      setError(err.message || "No se pudieron cargar los clientes");
+      setCustomers(INITIAL_CUSTOMERS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
 
   const filtered = customers.filter(c => {
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -98,15 +128,25 @@ export default function CustomersPage() {
     setDialogOpen(true);
   };
 
-  const saveCustomer = () => {
+  const saveCustomer = async () => {
     const tags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
-    if (editingCustomer) {
-      setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? { ...c, ...form, tags } : c));
-    } else {
-      const newC: Customer = { ...form, tags, id: `c${Date.now()}`, lastActivity: "Ahora", conversations: 0, quotes: 0, sales: 0, warranties: 0 };
-      setCustomers(prev => [newC, ...prev]);
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(editingCustomer ? `/api/customers/${editingCustomer.id}` : "/api/customers", {
+        method: editingCustomer ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, tags }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "No se pudo guardar el cliente");
+      await loadCustomers();
+      setDialogOpen(false);
+      setSelectedCustomer(null);
+    } catch (err: any) {
+      setError(err.message || "No se pudo guardar el cliente");
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
   };
 
   const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
@@ -130,12 +170,18 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Clientes</h1>
-          <p className="text-muted-foreground text-sm">{customers.length} clientes registrados</p>
+          <p className="text-muted-foreground text-sm">{loading ? "Cargando clientes..." : `${customers.length} clientes registrados`}</p>
         </div>
         <Button onClick={openCreate} className="gap-2">
           <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nuevo Cliente</span><span className="sm:hidden">Nuevo</span>
         </Button>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
@@ -369,8 +415,8 @@ export default function CustomersPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={saveCustomer} disabled={!form.name}>
-              <Check className="w-4 h-4 mr-2" /> {editingCustomer ? "Guardar cambios" : "Crear cliente"}
+            <Button onClick={saveCustomer} disabled={!form.name || saving}>
+              <Check className="w-4 h-4 mr-2" /> {saving ? "Guardando..." : editingCustomer ? "Guardar cambios" : "Crear cliente"}
             </Button>
           </DialogFooter>
         </DialogContent>

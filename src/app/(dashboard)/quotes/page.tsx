@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Plus, Eye, Edit2, Send, FileText, Check, Trash2, ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,9 @@ const calcTotals = (items: QuoteItem[], discount: number, tax: number) => {
 };
 
 export default function QuotesPage() {
-  const [quotes, setQuotes] = useState<Quote[]>(INITIAL_QUOTES);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [availableCustomers, setAvailableCustomers] = useState(CUSTOMERS);
+  const [availableProducts, setAvailableProducts] = useState(PRODUCTS);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [builderOpen, setBuilderOpen] = useState(false);
@@ -69,6 +71,44 @@ export default function QuotesPage() {
   const [bStatus, setBStatus] = useState("DRAFT");
   const [bProductId, setBProductId] = useState("");
   const [bQty, setBQty] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadQuotesData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [quotesResponse, customersResponse, productsResponse] = await Promise.all([
+        fetch("/api/quotes", { cache: "no-store" }),
+        fetch("/api/customers", { cache: "no-store" }),
+        fetch("/api/products", { cache: "no-store" }),
+      ]);
+      if (!quotesResponse.ok || !customersResponse.ok || !productsResponse.ok) {
+        throw new Error("No se pudieron cargar cotizaciones");
+      }
+      const [quotesData, customersData, productsData] = await Promise.all([
+        quotesResponse.json(),
+        customersResponse.json(),
+        productsResponse.json(),
+      ]);
+      setQuotes(quotesData);
+      setAvailableCustomers(customersData.map((customer: any) => ({ id: customer.id, name: customer.name })));
+      setAvailableProducts(productsData.map((product: any) => ({ id: product.id, name: product.name, price: product.price })));
+    } catch (err) {
+      console.error(err);
+      setError("Mostrando cotizaciones de demo: no se pudo conectar con la base de datos.");
+      setQuotes(INITIAL_QUOTES);
+      setAvailableCustomers(CUSTOMERS);
+      setAvailableProducts(PRODUCTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadQuotesData();
+  }, []);
 
   const filtered = quotes.filter(q => {
     const matchSearch = q.customerName.toLowerCase().includes(search.toLowerCase()) || q.number.includes(search);
@@ -89,7 +129,7 @@ export default function QuotesPage() {
   };
 
   const addItem = () => {
-    const prod = PRODUCTS.find(p => p.id === bProductId);
+    const prod = availableProducts.find(p => p.id === bProductId);
     if (!prod) return;
     setBItems(prev => [...prev, { productId: prod.id, productName: prod.name, quantity: bQty, price: prod.price, total: prod.price * bQty }]);
     setBProductId(""); setBQty(1);
@@ -97,17 +137,55 @@ export default function QuotesPage() {
 
   const removeItem = (i: number) => setBItems(prev => prev.filter((_, idx) => idx !== i));
 
-  const saveQuote = (status: string) => {
-    const customer = CUSTOMERS.find(c => c.id === bCustomerId);
+  const saveQuote = async (status: string) => {
+    const customer = availableCustomers.find(c => c.id === bCustomerId);
     if (!customer) return;
     const { subtotal, total } = calcTotals(bItems, bDiscount, bTax);
-    if (editingQuote) {
-      setQuotes(prev => prev.map(q => q.id === editingQuote.id ? { ...q, customerId: bCustomerId, customerName: customer.name, items: bItems, subtotal, discount: bDiscount, tax: bTax, total, notes: bNotes, status } : q));
-    } else {
-      const newQ: Quote = { id: `q${Date.now()}`, number: `COT-${String(quotes.length + 1).padStart(4, "0")}`, customerId: bCustomerId, customerName: customer.name, items: bItems, subtotal, discount: bDiscount, tax: bTax, total, notes: bNotes, status, date: new Date().toISOString().split("T")[0] };
-      setQuotes(prev => [newQ, ...prev]);
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(editingQuote ? `/api/quotes/${editingQuote.id}` : "/api/quotes", {
+        method: editingQuote ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: bCustomerId,
+          items: bItems,
+          subtotal,
+          discount: bDiscount,
+          tax: bTax,
+          total,
+          notes: bNotes,
+          status,
+        }),
+      });
+      if (!response.ok) throw new Error("No se pudo guardar la cotización");
+      await loadQuotesData();
+      setBuilderOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo guardar la cotización.");
+    } finally {
+      setSaving(false);
     }
-    setBuilderOpen(false);
+  };
+
+  const convertQuoteToSale = async (quote: Quote) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteId: quote.id }),
+      });
+      if (!response.ok) throw new Error("No se pudo convertir a venta");
+      setDetailQuote(null);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo convertir la cotización a venta.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const { subtotal: previewSubtotal, total: previewTotal } = calcTotals(bItems, bDiscount, bTax);
@@ -119,7 +197,7 @@ export default function QuotesPage() {
           <Button variant="ghost" size="sm" onClick={() => setDetailQuote(null)} className="gap-2"><ArrowLeft className="w-4 h-4" /> Volver</Button>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-2"><Printer className="w-4 h-4" /> Imprimir</Button>
-            {detailQuote.status === "ACCEPTED" && <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700"><Check className="w-4 h-4" /> Convertir a Venta</Button>}
+            {detailQuote.status === "ACCEPTED" && <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => convertQuoteToSale(detailQuote)} disabled={saving}><Check className="w-4 h-4" /> Convertir a Venta</Button>}
           </div>
         </div>
         <Card className="p-8">
@@ -169,9 +247,14 @@ export default function QuotesPage() {
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">Cotizaciones</h1><p className="text-muted-foreground text-sm">{quotes.length} cotizaciones en total</p></div>
+        <div><h1 className="text-2xl font-bold">Cotizaciones</h1><p className="text-muted-foreground text-sm">{loading ? "Cargando cotizaciones..." : `${quotes.length} cotizaciones en total`}</p></div>
         <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Cotización</span><span className="sm:hidden">Nueva</span></Button>
       </div>
+      {error && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {error}
+        </div>
+      )}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -262,7 +345,7 @@ export default function QuotesPage() {
               <label className="text-sm font-medium">Cliente *</label>
               <Select value={bCustomerId} onValueChange={setBCustomerId}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
-                <SelectContent>{CUSTOMERS.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{availableCustomers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
@@ -270,7 +353,7 @@ export default function QuotesPage() {
               <div className="flex gap-2">
                 <Select value={bProductId} onValueChange={setBProductId}>
                   <SelectTrigger className="flex-1"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
-                  <SelectContent>{PRODUCTS.map(p => <SelectItem key={p.id} value={p.id}>{p.name} — ${p.price.toLocaleString()}</SelectItem>)}</SelectContent>
+                  <SelectContent>{availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name} — ${p.price.toLocaleString()}</SelectItem>)}</SelectContent>
                 </Select>
                 <Input type="number" value={bQty} onChange={e => setBQty(parseInt(e.target.value) || 1)} min={1} className="w-20" />
                 <Button onClick={addItem} disabled={!bProductId}><Plus className="w-4 h-4" /></Button>
@@ -311,8 +394,8 @@ export default function QuotesPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setBuilderOpen(false)}>Cancelar</Button>
-            <Button variant="outline" onClick={() => saveQuote("DRAFT")} disabled={!bCustomerId || bItems.length === 0}>Guardar Borrador</Button>
-            <Button onClick={() => saveQuote("SENT")} disabled={!bCustomerId || bItems.length === 0} className="gap-2"><Send className="w-4 h-4" />Enviar Cotización</Button>
+            <Button variant="outline" onClick={() => saveQuote("DRAFT")} disabled={!bCustomerId || bItems.length === 0 || saving}>Guardar Borrador</Button>
+            <Button onClick={() => saveQuote("SENT")} disabled={!bCustomerId || bItems.length === 0 || saving} className="gap-2"><Send className="w-4 h-4" />{saving ? "Guardando..." : "Enviar Cotización"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

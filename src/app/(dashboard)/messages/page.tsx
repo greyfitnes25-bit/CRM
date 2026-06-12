@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn, getInitials, formatDateRelative } from "@/lib/utils";
 import { DEMO_CONVERSATIONS, DEMO_MESSAGES, DEMO_QUICK_REPLIES, type DemoConversation, type DemoMessage } from "@/lib/demo-data";
+import { ChannelLogo, type ChannelLogoId } from "@/components/common/channel-logo";
 
 type Channel = "ALL" | "WHATSAPP" | "INSTAGRAM" | "MESSENGER" | "WEB";
 type StatusFilter = "ALL" | "OPEN" | "PENDING" | "CLOSED";
@@ -172,7 +173,7 @@ export default function MessagesPage() {
         </div>
 
         {/* Filtros de canal */}
-        <div className="flex gap-1 p-3 border-b border-border overflow-x-auto scrollbar-none shrink-0">
+        <div className="grid grid-cols-2 gap-2 p-3 border-b border-border shrink-0 sm:flex sm:flex-wrap">
           {(["ALL", "WHATSAPP", "INSTAGRAM", "MESSENGER", "WEB"] as Channel[]).map((ch) => {
             const count = ch === "ALL" ? conversations.length : conversations.filter((c) => c.channel === ch).length;
             return (
@@ -180,12 +181,13 @@ export default function MessagesPage() {
                 key={ch}
                 onClick={() => setChannelFilter(ch)}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                  "flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
                   channelFilter === ch
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 )}
               >
+                <ChannelLogo channel={ch as ChannelLogoId} className="h-4 w-4 text-[9px]" />
                 {ch === "ALL" ? "Todos" : CHANNEL_CONFIG[ch].label}
                 <span className={cn(
                   "text-[10px] px-1 rounded-full",
@@ -243,10 +245,7 @@ export default function MessagesPage() {
                             {getInitials(conv.customer.name)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className={cn(
-                          "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background",
-                          ch.dot
-                        )} />
+                        <ChannelLogo channel={conv.channel as ChannelLogoId} className="absolute -bottom-1 -right-1 h-4 w-4 border-2 border-background" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
@@ -256,7 +255,7 @@ export default function MessagesPage() {
                           )}>
                             {conv.customer.name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0" suppressHydrationWarning>
                             {formatDateRelative(conv.lastMessageAt)}
                           </span>
                         </div>
@@ -313,10 +312,7 @@ export default function MessagesPage() {
                   {getInitials(selected.customer.name)}
                 </AvatarFallback>
               </Avatar>
-              <span className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
-                CHANNEL_CONFIG[selected.channel].dot
-              )} />
+              <ChannelLogo channel={selected.channel as ChannelLogoId} className="absolute -bottom-1 -right-1 h-4 w-4 border-2 border-background" />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-semibold truncate">{selected.customer.name}</h2>
@@ -442,7 +438,7 @@ export default function MessagesPage() {
                         {msg.content}
                       </div>
                       <div className={cn("flex items-center gap-1 px-1", isOutbound ? "justify-end" : "justify-start")}>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground" suppressHydrationWarning>
                           {msg.sentAt.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
                         </span>
                         {isOutbound && !isNote && <CheckCheck className="w-3 h-3 text-blue-500" />}
@@ -608,7 +604,8 @@ export default function MessagesPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">{selected.customer.phone}</p>
                   )}
                   <div className="flex items-center justify-center gap-2 mt-2">
-                    <Badge variant="outline" className={cn("text-xs", CHANNEL_CONFIG[selected.channel].badge)}>
+                    <Badge variant="outline" className={cn("text-xs gap-1.5", CHANNEL_CONFIG[selected.channel].badge)}>
+                      <ChannelLogo channel={selected.channel as ChannelLogoId} className="h-4 w-4" />
                       {CHANNEL_CONFIG[selected.channel].label}
                     </Badge>
                     <Badge variant="outline" className={cn("text-xs", STATUS_CONFIG[selected.status].color)}>

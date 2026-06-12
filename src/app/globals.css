@@ -32,6 +32,7 @@
     --sidebar-accent-foreground: 213 31% 91%;
     --sidebar-border: 216 34% 17%;
     --sidebar-ring: 221.2 83.2% 53.3%;
+    --app-font-family: var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif;
   }
 
   .dark {
@@ -72,6 +73,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--app-font-family);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
@@ -161,4 +163,464 @@
 @keyframes shimmer {
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
+}
+
+@keyframes hud-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hud-counter-rotate {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes hud-pulse {
+  0%, 100% { opacity: 0.86; }
+  50% { opacity: 1; }
+}
+
+@keyframes hud-scan {
+  0% { stroke-dashoffset: 0; opacity: 0.25; }
+  50% { opacity: 0.75; }
+  100% { stroke-dashoffset: -220; opacity: 0.25; }
+}
+
+@keyframes hud-flicker {
+  0%, 100% { opacity: 0.45; }
+  40% { opacity: 0.9; }
+  70% { opacity: 0.55; }
+}
+
+@keyframes hud-starfield {
+  from { background-position: 0 0, 34px 54px, 0 0; }
+  to { background-position: 180px 220px, 240px 120px, 0 0; }
+}
+
+@keyframes hud-spaceship-drift {
+  0%, 100% { transform: translate3d(-8px, 8px, 0) rotate(-7deg) scale(0.96); }
+  50% { transform: translate3d(15px, -8px, 0) rotate(-3deg) scale(1.02); }
+}
+
+@keyframes space-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
+  50% { transform: translate3d(12px, -16px, 0) rotate(5deg); }
+}
+
+@keyframes astronaut-swim {
+  0%, 100% { transform: translate3d(-10px, 10px, 0) rotate(-8deg) scale(0.76); opacity: 0.46; }
+  12% { transform: translate3d(10px, -8px, 0) rotate(-4deg) scale(0.9); opacity: 0.66; }
+  20% { transform: translate3d(38px, -18px, 0) rotate(1deg) scale(1.18); opacity: 0.9; }
+  30% { transform: translate3d(52px, -12px, 0) rotate(3deg) scale(1.22); opacity: 0.92; }
+  40% { transform: translate3d(104px, 2px, 0) rotate(9deg) scale(0.82); opacity: 0.46; }
+  48% { transform: translate3d(154px, 0, 0) rotate(13deg) scale(0.64); opacity: 0.16; }
+  54%, 62% { transform: translate3d(182px, -18px, 0) rotate(15deg) scale(0.5); opacity: 0; }
+  69% { transform: translate3d(calc(var(--astronaut-trip) - 38px), -6px, 0) rotate(6deg) scale(0.7); opacity: 0.12; }
+  76% { transform: translate3d(calc(var(--astronaut-trip) - 76px), -18px, 0) rotate(-2deg) scale(1.16); opacity: 0.9; }
+  86% { transform: translate3d(calc(var(--astronaut-trip) - 92px), -10px, 0) rotate(-4deg) scale(1.2); opacity: 0.92; }
+  94% { transform: translate3d(42px, 10px, 0) rotate(-7deg) scale(0.84); opacity: 0.52; }
+}
+
+@keyframes astronaut-float-pose {
+  0%, 15%, 36%, 68%, 91%, 100% { opacity: 0.92; transform: scale(1); }
+  18%, 32%, 73%, 88% { opacity: 0; transform: scale(1.04); }
+  50%, 63% { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes astronaut-wave-pose {
+  0%, 15%, 36%, 69%, 91%, 100% { opacity: 0; transform: translate3d(0, 2px, 0) rotate(0deg) scale(1); }
+  19% { opacity: 0.96; transform: translate3d(0, 0, 0) rotate(-2deg) scale(1.03); }
+  23% { opacity: 1; transform: translate3d(1px, -2px, 0) rotate(3deg) scale(1.05); }
+  27% { opacity: 1; transform: translate3d(-1px, 1px, 0) rotate(-3deg) scale(1.04); }
+  32% { opacity: 0.92; transform: translate3d(0, 0, 0) rotate(2deg) scale(1.02); }
+  74% { opacity: 0.96; transform: translate3d(0, 0, 0) rotate(2deg) scale(1.03); }
+  78% { opacity: 1; transform: translate3d(-1px, -2px, 0) rotate(-3deg) scale(1.05); }
+  82% { opacity: 1; transform: translate3d(1px, 1px, 0) rotate(3deg) scale(1.04); }
+  88% { opacity: 0.92; transform: translate3d(0, 0, 0) rotate(-2deg) scale(1.02); }
+}
+
+@keyframes shuttle-pickup {
+  0%, 14% {
+    opacity: 0;
+    transform: translate3d(96px, 4px, 0) rotate(-6deg) scale(0.74);
+  }
+  20% {
+    opacity: 0.84;
+    transform: translate3d(20px, 0, 0) rotate(-5deg) scale(0.82);
+  }
+  38% {
+    opacity: 0.95;
+    transform: translate3d(-252px, -20px, 0) rotate(-5deg) scale(0.9);
+  }
+  48% {
+    opacity: 0;
+    transform: translate3d(-380px, -36px, 0) rotate(-4deg) scale(0.74);
+  }
+  56%, 64% {
+    opacity: 0;
+    transform: translate3d(-380px, 18px, 0) rotate(3deg) scaleX(-0.74) scaleY(0.74);
+  }
+  70% {
+    opacity: 0.82;
+    transform: translate3d(-270px, 6px, 0) rotate(3deg) scaleX(-0.82) scaleY(0.82);
+  }
+  88% {
+    opacity: 0.94;
+    transform: translate3d(18px, -12px, 0) rotate(3deg) scaleX(-0.9) scaleY(0.9);
+  }
+  96%, 100% {
+    opacity: 0;
+    transform: translate3d(108px, -18px, 0) rotate(3deg) scaleX(-0.74) scaleY(0.74);
+  }
+}
+
+@keyframes planet-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-8px, 10px, 0) scale(1.05); }
+}
+
+@keyframes shooting-star {
+  0%, 86% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-31deg) scaleX(0.15);
+  }
+  88% {
+    opacity: 0.75;
+    transform: translate3d(28px, 18px, 0) rotate(-31deg) scaleX(0.55);
+  }
+  92% {
+    opacity: 0;
+    transform: translate3d(118px, 74px, 0) rotate(-31deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(118px, 74px, 0) rotate(-31deg) scaleX(1);
+  }
+}
+
+@keyframes day-orb-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.78; }
+  50% { transform: translate3d(-12px, 10px, 0) scale(1.08); opacity: 0.96; }
+}
+
+@keyframes day-signal-pulse {
+  0%, 100% { transform: scale(0.82); opacity: 0.18; }
+  45% { transform: scale(1.2); opacity: 0.5; }
+}
+
+@keyframes day-glider-pass {
+  0%, 20% { transform: translate3d(-34px, 12px, 0) rotate(-12deg) scale(0.72); opacity: 0; }
+  32% { opacity: 0.78; }
+  52% { transform: translate3d(318px, -44px, 0) rotate(-12deg) scale(0.92); opacity: 0.9; }
+  68%, 100% { transform: translate3d(430px, -70px, 0) rotate(-12deg) scale(0.72); opacity: 0; }
+}
+
+.hud-orbit-slow,
+.hud-orbit-reverse,
+.hud-segment,
+.hud-scan-line,
+.hud-flicker {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.hud-orbit-slow {
+  animation: hud-rotate 34s linear infinite;
+}
+
+.hud-orbit-reverse {
+  animation: hud-counter-rotate 48s linear infinite;
+}
+
+.hud-segment {
+  animation: hud-pulse 3.4s ease-in-out infinite;
+  transition: opacity 160ms ease, stroke-width 160ms ease;
+}
+
+.hud-segment:hover {
+  opacity: 1;
+  stroke-width: 32;
+}
+
+.hud-scan-line {
+  animation: hud-scan 4.8s linear infinite;
+}
+
+.hud-flicker {
+  animation: hud-flicker 2.6s ease-in-out infinite;
+}
+
+.hud-starfield {
+  background-image:
+    radial-gradient(circle, rgba(224, 242, 254, 0.95) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(56, 189, 248, 0.7) 0 1px, transparent 1.5px),
+    radial-gradient(ellipse at 50% 50%, rgba(14, 165, 233, 0.18), transparent 58%);
+  background-size: 72px 72px, 112px 112px, 100% 100%;
+  animation: hud-starfield 22s linear infinite;
+}
+
+.hud-spaceship {
+  animation: hud-spaceship-drift 8s ease-in-out infinite;
+}
+
+.channel-space-card {
+  --channel-glow: #0284c7;
+  --channel-orbit: #0ea5e9;
+  --channel-center-a: #ffffff;
+  --channel-center-b: #e0f2fe;
+  --channel-center-c: #bfdbfe;
+  --channel-center-stroke: #38bdf8;
+  --channel-track: #dbeafe;
+  --channel-label: #0369a1;
+  --channel-total: #0f172a;
+  --channel-caption: #0284c7;
+  background:
+    radial-gradient(circle at 78% 20%, rgba(251, 191, 36, 0.18), transparent 28%),
+    radial-gradient(circle at 18% 28%, rgba(14, 165, 233, 0.15), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94));
+}
+
+.channel-space-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 42%, black 0 44%, transparent 70%);
+  opacity: 0.35;
+}
+
+.channel-chart-shell {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.92), rgba(224, 242, 254, 0.45) 55%, rgba(255, 255, 255, 0.74) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -20px 42px rgba(14, 165, 233, 0.08),
+    0 18px 44px rgba(15, 23, 42, 0.08);
+}
+
+.day-orb {
+  width: 86px;
+  height: 86px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.95), transparent 18%),
+    linear-gradient(135deg, rgba(251, 191, 36, 0.82), rgba(14, 165, 233, 0.34));
+  filter: blur(0.2px);
+  animation: day-orb-float 12s ease-in-out infinite;
+}
+
+.day-orb-secondary {
+  width: 54px;
+  height: 54px;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.92), transparent 20%),
+    linear-gradient(135deg, rgba(20, 184, 166, 0.45), rgba(59, 130, 246, 0.28));
+  animation-delay: -5s;
+}
+
+.day-signal {
+  width: 76px;
+  height: 76px;
+  border: 1px solid rgba(14, 165, 233, 0.32);
+  border-radius: 999px;
+  animation: day-signal-pulse 5.4s ease-in-out infinite;
+}
+
+.day-signal::after {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border-radius: inherit;
+  border: 1px dashed rgba(14, 165, 233, 0.28);
+}
+
+.day-signal-two {
+  width: 58px;
+  height: 58px;
+  animation-delay: -2.2s;
+}
+
+.day-glider {
+  width: 54px;
+  height: 18px;
+  background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.34), rgba(251, 191, 36, 0.72));
+  clip-path: polygon(0 45%, 74% 0, 100% 50%, 74% 100%);
+  filter: drop-shadow(0 0 10px rgba(14, 165, 233, 0.28));
+  animation: day-glider-pass 14s ease-in-out infinite;
+}
+
+.dark .channel-space-card {
+  --channel-glow: #22d3ee;
+  --channel-orbit: #0ea5e9;
+  --channel-center-a: #0f172a;
+  --channel-center-b: #020617;
+  --channel-center-c: #020617;
+  --channel-center-stroke: #164e63;
+  --channel-track: #082f49;
+  --channel-label: #93c5fd;
+  --channel-total: #e0f2fe;
+  --channel-caption: #67e8f9;
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.74), rgba(2, 6, 23, 0.96)),
+    #020617;
+  border-color: rgba(56, 189, 248, 0.16);
+}
+
+.dark .channel-space-card::before,
+.dark .channel-space-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dark .channel-space-card::before {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.78) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 72% 14%, rgba(191, 219, 254, 0.66) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 36% 62%, rgba(125, 211, 252, 0.58) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 84% 78%, rgba(244, 114, 182, 0.44) 0 1px, transparent 1.7px);
+  background-size: 94px 94px, 138px 138px, 82px 82px, 122px 122px;
+  background-position: 0 0, 34px 18px, 12px 46px, 70px 22px;
+  opacity: 0.58;
+  animation: hud-starfield 30s linear infinite;
+}
+
+.dark .channel-space-card::after {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(226, 232, 240, 0.22), rgba(30, 41, 59, 0.18) 19%, transparent 42%),
+    radial-gradient(ellipse at 50% 32%, rgba(168, 85, 247, 0.24), rgba(14, 165, 233, 0.12) 33%, transparent 62%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.62) 0%, transparent 18%, transparent 72%, rgba(2, 6, 23, 0.62) 100%);
+  opacity: 1;
+}
+
+.dark .channel-chart-shell {
+  background: transparent;
+  box-shadow: none;
+}
+
+.space-astronaut {
+  animation: space-float 11s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.22));
+}
+
+.space-astronaut-realistic {
+  --astronaut-trip: clamp(230px, 34vw, 350px);
+  animation: astronaut-swim 32s ease-in-out infinite;
+  filter:
+    drop-shadow(0 0 14px rgba(34, 211, 238, 0.22))
+    drop-shadow(0 12px 22px rgba(2, 6, 23, 0.38));
+  transform-origin: 50% 50%;
+}
+
+.space-shuttle-realistic {
+  --astronaut-trip: clamp(230px, 34vw, 350px);
+  --shuttle-trip: clamp(250px, 38vw, 390px);
+  animation: shuttle-pickup 32s ease-in-out infinite;
+  filter:
+    drop-shadow(0 0 14px rgba(186, 230, 253, 0.22))
+    drop-shadow(0 16px 28px rgba(2, 6, 23, 0.46));
+  transform-origin: 50% 50%;
+}
+
+.space-astronaut-pose {
+  transform-origin: 50% 50%;
+  will-change: opacity, transform;
+}
+
+.space-astronaut-pose-float {
+  animation: astronaut-float-pose 32s ease-in-out infinite;
+}
+
+.space-astronaut-pose-wave {
+  animation: astronaut-wave-pose 32s ease-in-out infinite;
+}
+
+.space-planets-realistic {
+  animation: planet-drift 18s ease-in-out infinite;
+  filter:
+    drop-shadow(0 0 18px rgba(96, 165, 250, 0.2))
+    drop-shadow(0 0 28px rgba(168, 85, 247, 0.12));
+}
+
+.shooting-star {
+  width: 92px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, rgba(186, 230, 253, 0.1) 35%, rgba(255, 255, 255, 0.88) 100%);
+  box-shadow:
+    0 0 6px rgba(125, 211, 252, 0.38),
+    0 0 12px rgba(59, 130, 246, 0.18);
+  opacity: 0;
+  transform-origin: right center;
+  animation: shooting-star 34s linear infinite;
+}
+
+.shooting-star::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 10px rgba(186, 230, 253, 0.85);
+}
+
+.shooting-star-two {
+  width: 72px;
+  animation-duration: 46s;
+  animation-delay: -19s;
+}
+
+.space-planet {
+  border-radius: 999px;
+  animation: planet-drift 14s ease-in-out infinite;
+  box-shadow: 0 0 24px rgba(125, 211, 252, 0.24);
+}
+
+.space-planet-lg {
+  width: 72px;
+  height: 72px;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.84), transparent 13%),
+    linear-gradient(135deg, #38bdf8 0%, #2563eb 45%, #312e81 100%);
+  opacity: 0.42;
+}
+
+.space-planet-sm {
+  width: 30px;
+  height: 30px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.78), transparent 18%),
+    linear-gradient(135deg, #f59e0b, #e11d48 72%);
+  opacity: 0.36;
+  animation-delay: -5s;
+}
+
+.space-planet-ring {
+  width: 38px;
+  height: 38px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.7), transparent 15%),
+    linear-gradient(135deg, #a78bfa, #0f766e);
+  opacity: 0.34;
+  animation-delay: -8s;
+}
+
+.space-planet-ring::after {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 15px;
+  width: 64px;
+  height: 10px;
+  border: 2px solid rgba(226, 232, 240, 0.58);
+  border-radius: 999px;
+  transform: rotate(-16deg);
 }

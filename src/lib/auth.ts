@@ -1,10 +1,10 @@
-import { NextAuthOptions } from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "./prisma";
 
-export const authOptions: NextAuthOptions = {
+export const authConfig = {
   adapter: PrismaAdapter(prisma) as any,
   session: {
     strategy: "jwt",
@@ -27,9 +27,12 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Find user across all companies (first match)
+        const email = String(credentials.email).toLowerCase();
+        const password = String(credentials.password);
+
         const user = await prisma.user.findFirst({
           where: {
-            email: credentials.email.toLowerCase(),
+            email,
             isActive: true,
           },
           include: {
@@ -42,7 +45,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const isPasswordValid = await bcrypt.compare(
-          credentials.password,
+          password,
           user.password
         );
 
@@ -86,4 +89,6 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-};
+} satisfies NextAuthConfig;
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

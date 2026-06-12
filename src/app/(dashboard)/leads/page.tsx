@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Filter, MoreVertical, User, Clock, DollarSign,
@@ -18,13 +18,40 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn, getInitials, formatCurrency, formatDateRelative } from "@/lib/utils";
 import { LEAD_STAGES, LEAD_STAGE_COLORS, CUSTOMER_SOURCE_LABELS, CUSTOMER_SOURCE_COLORS } from "@/lib/constants";
 import { DEMO_LEADS, type DemoLead } from "@/lib/demo-data";
-import type { LeadStage } from "@/types";
+import type { CustomerSource, LeadStage } from "@/types";
 
 type Lead = DemoLead;
+
+type LeadForm = {
+  name: string;
+  phone: string;
+  source: CustomerSource;
+  stage: LeadStage;
+  estimatedValue: number;
+  notes: string;
+  tags: string;
+};
+
+const EMPTY_FORM: LeadForm = {
+  name: "",
+  phone: "",
+  source: "WHATSAPP",
+  stage: "NEW_LEAD",
+  estimatedValue: 0,
+  notes: "",
+  tags: "",
+};
+
+const normalizeLead = (lead: Lead): Lead => ({
+  ...lead,
+  lastContact: lead.lastContact ? new Date(lead.lastContact) : new Date(),
+  tags: lead.tags ?? [],
+  estimatedValue: lead.estimatedValue ?? 0,
+});
 
 const STAGE_ICONS: Record<string, React.ReactNode> = {
   NEW_LEAD: <Target className="w-3.5 h-3.5" />,
@@ -36,13 +63,84 @@ const STAGE_ICONS: Record<string, React.ReactNode> = {
   LOST: <XCircle className="w-3.5 h-3.5" />,
 };
 
+const STAGE_STYLE: Record<string, { column: string; header: string; icon: string; accent: string }> = {
+  NEW_LEAD: {
+    column: "border-blue-500/30 bg-blue-500/5",
+    header: "text-blue-300",
+    icon: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+    accent: "bg-blue-500",
+  },
+  CONTACTED: {
+    column: "border-cyan-500/30 bg-cyan-500/5",
+    header: "text-cyan-300",
+    icon: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+    accent: "bg-cyan-500",
+  },
+  QUOTED: {
+    column: "border-amber-500/30 bg-amber-500/5",
+    header: "text-amber-300",
+    icon: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+    accent: "bg-amber-500",
+  },
+  NEGOTIATION: {
+    column: "border-orange-500/30 bg-orange-500/5",
+    header: "text-orange-300",
+    icon: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    accent: "bg-orange-500",
+  },
+  PENDING_PAYMENT: {
+    column: "border-purple-500/30 bg-purple-500/5",
+    header: "text-purple-300",
+    icon: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    accent: "bg-purple-500",
+  },
+  SOLD: {
+    column: "border-emerald-500/30 bg-emerald-500/5",
+    header: "text-emerald-300",
+    icon: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    accent: "bg-emerald-500",
+  },
+  LOST: {
+    column: "border-red-500/30 bg-red-500/5",
+    header: "text-red-300",
+    icon: "bg-red-500/15 text-red-400 border-red-500/30",
+    accent: "bg-red-500",
+  },
+};
+
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(DEMO_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState("");
   const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
   const [dragOverStage, setDragOverStage] = useState<LeadStage | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState<LeadForm>(EMPTY_FORM);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadLeads = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/leads", { cache: "no-store" });
+      if (!response.ok) throw new Error("No se pudieron cargar los leads");
+      const data = await response.json();
+      setLeads(data.map(normalizeLead));
+    } catch (err) {
+      console.error(err);
+      setError("Mostrando datos de demo: no se pudo conectar con la base de datos.");
+      setLeads(DEMO_LEADS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
 
   const filtered = leads.filter((l) =>
     !search ||
@@ -71,13 +169,7 @@ export default function LeadsPage() {
   const handleDrop = (e: React.DragEvent, stage: LeadStage) => {
     e.preventDefault();
     if (draggedLead && draggedLead.stage !== stage) {
-      setLeads((prev) =>
-        prev.map((l) =>
-          l.id === draggedLead.id
-            ? { ...l, stage, lastContact: new Date() }
-            : l
-        )
-      );
+      void moveLead(draggedLead.id, stage);
     }
     setDraggedLead(null);
     setDragOverStage(null);
@@ -88,15 +180,64 @@ export default function LeadsPage() {
     setDragOverStage(null);
   };
 
-  const moveLead = (leadId: string, newStage: LeadStage) => {
+  const moveLead = async (leadId: string, newStage: LeadStage) => {
+    const previous = leads;
     setLeads((prev) =>
       prev.map((l) => l.id === leadId ? { ...l, stage: newStage, lastContact: new Date() } : l)
     );
+    setSelectedLead((current) =>
+      current?.id === leadId ? { ...current, stage: newStage, lastContact: new Date() } : current
+    );
+    try {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage }),
+      });
+      if (!response.ok) throw new Error("No se pudo mover el lead");
+    } catch (err) {
+      console.error(err);
+      setLeads(previous);
+      setError("No se pudo guardar el cambio de etapa.");
+    }
   };
 
   const openDetail = (lead: Lead) => {
     setSelectedLead(lead);
     setShowDetail(true);
+  };
+
+  const openCreate = (stage: LeadStage = "NEW_LEAD") => {
+    setForm({ ...EMPTY_FORM, stage });
+    setShowCreate(true);
+  };
+
+  const saveLead = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          name: form.name.trim(),
+          phone: form.phone.trim() || null,
+          notes: form.notes.trim() || null,
+          estimatedValue: Number(form.estimatedValue) || 0,
+          tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+        }),
+      });
+      if (!response.ok) throw new Error("No se pudo crear el lead");
+      await loadLeads();
+      setShowCreate(false);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo crear el lead. Revisa la conexión con PostgreSQL.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const totalLeads = leads.filter((l) => !["SOLD", "LOST"].includes(l.stage)).length;
@@ -119,11 +260,17 @@ export default function LeadsPage() {
             <h1 className="text-2xl font-bold">Embudo de Ventas</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Arrastra las tarjetas entre columnas para mover leads</p>
           </div>
-          <Button size="sm" className="gap-2 shrink-0">
+          <Button size="sm" className="gap-2 shrink-0" onClick={() => openCreate()}>
             <Plus className="w-4 h-4" />
             Nuevo Lead
           </Button>
         </div>
+
+        {error && (
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            {error}
+          </div>
+        )}
 
         {/* KPI Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -175,28 +322,30 @@ export default function LeadsPage() {
             const stageLeads = getStageLeads(stage.id as LeadStage);
             const stageValue = getStageTotalValue(stage.id as LeadStage);
             const isDragOver = dragOverStage === stage.id;
+            const stageStyle = STAGE_STYLE[stage.id] ?? STAGE_STYLE.NEW_LEAD;
 
             return (
               <div
                 key={stage.id}
                 className={cn(
-                  "flex flex-col w-64 rounded-2xl border transition-all duration-200",
+                  "flex flex-col w-64 rounded-2xl border transition-all duration-200 overflow-hidden",
                   isDragOver
                     ? "border-primary bg-primary/5 shadow-lg shadow-primary/10 scale-[1.01]"
-                    : "border-border bg-muted/20"
+                    : stageStyle.column
                 )}
                 onDragOver={(e) => handleDragOver(e, stage.id as LeadStage)}
                 onDrop={(e) => handleDrop(e, stage.id as LeadStage)}
                 onDragLeave={() => setDragOverStage(null)}
               >
                 {/* Column Header */}
+                <span className={cn("h-1 w-full shrink-0", stageStyle.accent)} />
                 <div className="p-3 shrink-0">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <span className={cn("flex items-center justify-center w-6 h-6 rounded-md text-xs", stage.color)}>
+                      <span className={cn("flex items-center justify-center w-7 h-7 rounded-lg text-xs border", stageStyle.icon)}>
                         {STAGE_ICONS[stage.id]}
                       </span>
-                      <span className="text-sm font-semibold">{stage.label}</span>
+                      <span className={cn("text-sm font-semibold", stageStyle.header)}>{stage.label}</span>
                       <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground text-[11px] font-bold flex items-center justify-center">
                         {stageLeads.length}
                       </span>
@@ -208,7 +357,7 @@ export default function LeadsPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="text-xs">
-                        <DropdownMenuItem>Agregar lead aquí</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openCreate(stage.id as LeadStage)}>Agregar lead aquí</DropdownMenuItem>
                         <DropdownMenuItem>Ordenar por fecha</DropdownMenuItem>
                         <DropdownMenuItem>Ordenar por valor</DropdownMenuItem>
                       </DropdownMenuContent>
@@ -279,7 +428,7 @@ export default function LeadsPage() {
                                 {LEAD_STAGES.filter((s) => s.id !== stage.id).map((s) => (
                                   <DropdownMenuItem
                                     key={s.id}
-                                    onClick={() => moveLead(lead.id, s.id as LeadStage)}
+                                    onClick={() => void moveLead(lead.id, s.id as LeadStage)}
                                   >
                                     <ArrowRight className="w-3.5 h-3.5 mr-2" />{s.label}
                                   </DropdownMenuItem>
@@ -358,7 +507,10 @@ export default function LeadsPage() {
                     )}
 
                     {/* Add card button */}
-                    <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-border/60 text-xs text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+                    <button
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-border/60 text-xs text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                      onClick={() => openCreate(stage.id as LeadStage)}
+                    >
                       <Plus className="w-3.5 h-3.5" />
                       Agregar lead
                     </button>
@@ -369,6 +521,77 @@ export default function LeadsPage() {
           })}
         </div>
       </div>
+
+      {loading && (
+        <div className="fixed bottom-4 right-4 rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground shadow">
+          Cargando leads...
+        </div>
+      )}
+
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Nuevo Lead</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Cliente *</label>
+                <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nombre del cliente" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Teléfono</label>
+                <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="WhatsApp o teléfono" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Etapa</label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={form.stage}
+                  onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value as LeadStage }))}
+                >
+                  {LEAD_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Fuente</label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={form.source}
+                  onChange={(e) => setForm((f) => ({ ...f, source: e.target.value as CustomerSource }))}
+                >
+                  {Object.entries(CUSTOMER_SOURCE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Valor</label>
+                <Input type="number" value={form.estimatedValue} onChange={(e) => setForm((f) => ({ ...f, estimatedValue: Number(e.target.value) || 0 }))} placeholder="0" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Notas</label>
+              <textarea
+                className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={form.notes}
+                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                placeholder="Qué necesita, próximos pasos, condiciones..."
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Etiquetas</label>
+              <Input value={form.tags} onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))} placeholder="urgente, cámaras, residencial" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button onClick={saveLead} disabled={!form.name.trim() || saving}>
+              {saving ? "Guardando..." : "Crear lead"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Lead Detail Dialog */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
@@ -464,7 +687,7 @@ export default function LeadsPage() {
                   size="sm"
                   variant="outline"
                   className="flex-1 gap-1.5 border-green-300 text-green-700 hover:bg-green-50"
-                  onClick={() => { moveLead(selectedLead.id, "SOLD"); setShowDetail(false); }}
+                  onClick={() => { void moveLead(selectedLead.id, "SOLD"); setShowDetail(false); }}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Marcar vendido
@@ -473,7 +696,7 @@ export default function LeadsPage() {
                   size="sm"
                   variant="outline"
                   className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
-                  onClick={() => { moveLead(selectedLead.id, "LOST"); setShowDetail(false); }}
+                  onClick={() => { void moveLead(selectedLead.id, "LOST"); setShowDetail(false); }}
                 >
                   <XCircle className="w-3.5 h-3.5" />
                   Marcar perdido

@@ -7,14 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "postinstall": "prisma generate",
+    "seed": "node scripts/seed.cjs",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:check": "node scripts/count-db.cjs"
   },
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "node scripts/seed.cjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -40,11 +42,12 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "cookie": "0.7.2",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",
-    "next": "14.2.35",
-    "next-auth": "^4.24.14",
+    "next": "16.2.9",
+    "next-auth": "5.0.0-beta.31",
     "prisma": "^5.22.0",
     "react": "^18",
     "react-dom": "^18",
@@ -52,15 +55,16 @@
     "recharts": "^3.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
+    "uuid": "11.1.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
-    "postcss": "^8",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "postcss": "8.5.15",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5"

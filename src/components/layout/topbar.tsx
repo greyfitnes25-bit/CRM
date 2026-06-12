@@ -39,6 +39,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/quotes": "Cotizaciones",
   "/sales": "Ventas",
   "/installations": "Instalaciones",
+  "/team-map": "Mapa Equipo",
   "/warranties": "Garantías",
   "/returns": "Devoluciones",
   "/meta-ads": "Meta Ads",
@@ -84,9 +85,11 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const pageTitle = Object.entries(PAGE_TITLES).find(([path]) =>
-    pathname === path || pathname.startsWith(path + "/")
-  )?.[1] || "GreyCRM";
+  const pageTitle = pathname === "/settings/profile"
+    ? "Mi Perfil"
+    : Object.entries(PAGE_TITLES).find(([path]) =>
+      pathname === path || pathname.startsWith(path + "/")
+    )?.[1] || "GreyCRM";
 
   const unreadCount = mockNotifications.filter((n) => n.unread).length;
 

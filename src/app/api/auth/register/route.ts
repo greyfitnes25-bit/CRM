@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { companyName, name, email, password } = body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
     if (!companyName || !name || !email || !password) {
       return NextResponse.json(
@@ -15,16 +16,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return NextResponse.json(
-        { error: "La contraseña debe tener al menos 6 caracteres" },
+        { error: "Ingresa un correo electronico valido" },
         { status: 400 }
       );
     }
 
-    // Check if email exists
+    if (String(password).length < 8) {
+      return NextResponse.json(
+        { error: "La contrasena debe tener al menos 8 caracteres" },
+        { status: 400 }
+      );
+    }
+
     const existingUser = await prisma.user.findFirst({
-      where: { email: email.toLowerCase() },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -34,25 +41,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create company slug
     let slug = slugify(companyName);
     const existingCompany = await prisma.company.findUnique({ where: { slug } });
     if (existingCompany) {
       slug = `${slug}-${Date.now()}`;
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(String(password), 12);
 
-    // Create company and owner user
     const company = await prisma.company.create({
       data: {
-        name: companyName,
+        name: String(companyName).trim(),
         slug,
         users: {
           create: {
-            name,
-            email: email.toLowerCase(),
+            name: String(name).trim(),
+            email: normalizedEmail,
             password: hashedPassword,
             role: "OWNER",
             isActive: true,
@@ -70,7 +74,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Register error:", error);
     return NextResponse.json(
       { error: "Error al crear la cuenta. Por favor intenta de nuevo." },

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { FontPreferenceProvider } from "@/components/providers/font-preference-provider";
+import { AppearancePreferenceProvider } from "@/components/providers/appearance-preference-provider";
 import { Toaster } from "sonner";
 
 const geistSans = localFont({
@@ -15,6 +18,12 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+const poppins = Poppins({
+  subsets: ["latin"],
+  variable: "--font-poppins",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -26,6 +35,11 @@ export const metadata: Metadata = {
   keywords: ["CRM", "ventas", "leads", "WhatsApp", "Meta Ads", "gestión de clientes"],
   authors: [{ name: "GreyCRM" }],
   creator: "GreyCRM",
+  icons: {
+    icon: "/branding/greycrm-icon.png",
+    shortcut: "/branding/greycrm-icon.png",
+    apple: "/branding/greycrm-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -36,17 +50,40 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${poppins.variable} ${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem("greycrm-theme") || "dark";
+                  var resolved = theme === "system"
+                    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                    : theme;
+                  document.documentElement.classList.remove("light", "dark");
+                  document.documentElement.classList.add(resolved);
+                  if (!localStorage.getItem("greycrm-font-family")) {
+                    document.documentElement.style.setProperty("--app-font-family", "var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif");
+                  }
+                } catch (error) {}
+              })();
+            `,
+          }}
+        />
         <SessionProvider>
-          <ThemeProvider defaultTheme="light" storageKey="greycrm-theme">
-            {children}
-            <Toaster
-              position="top-right"
-              richColors
-              expand={true}
-              closeButton
-            />
+          <ThemeProvider defaultTheme="dark" storageKey="greycrm-theme">
+            <AppearancePreferenceProvider>
+              <FontPreferenceProvider>
+                {children}
+                <Toaster
+                  position="top-right"
+                  richColors
+                  expand={true}
+                  closeButton
+                />
+              </FontPreferenceProvider>
+            </AppearancePreferenceProvider>
           </ThemeProvider>
         </SessionProvider>
       </body>

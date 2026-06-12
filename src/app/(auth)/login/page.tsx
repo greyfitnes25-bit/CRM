@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Lock, Mail, Zap } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,8 +57,8 @@ export default function LoginPage() {
     <div className="w-full">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4 shadow-lg shadow-blue-500/30">
-          <Zap className="w-8 h-8 text-white" />
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-950/70 border border-white/10 mb-4 shadow-2xl shadow-orange-500/20">
+          <img src="/branding/greycrm-mark.png" alt="GreyCRM" className="h-16 w-16 object-contain" />
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">GreyCRM</h1>
         <p className="text-slate-400 mt-1 text-sm">CRM Inteligente para tu Negocio</p>

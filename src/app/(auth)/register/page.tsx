@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Building2, Eye, EyeOff, Lock, Mail, User, Zap } from "lucide-react";
+import { Building2, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +33,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres");
+    if (formData.password.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres");
       return;
     }
 
@@ -65,8 +65,8 @@ export default function RegisterPage() {
     <div className="w-full">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4 shadow-lg shadow-blue-500/30">
-          <Zap className="w-8 h-8 text-white" />
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-950/70 border border-white/10 mb-4 shadow-2xl shadow-orange-500/20">
+          <img src="/branding/greycrm-mark.png" alt="GreyCRM" className="h-16 w-16 object-contain" />
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">GreyCRM</h1>
         <p className="text-slate-400 mt-1 text-sm">Crea tu cuenta gratis</p>
@@ -149,7 +149,7 @@ export default function RegisterPage() {
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={formData.password}
                 onChange={handleChange}
                 className="pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500"

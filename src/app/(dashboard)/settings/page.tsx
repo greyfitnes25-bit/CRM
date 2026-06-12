@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, Palette, Users, Shield, GitBranch, MessageSquare, Plug, CreditCard, Check, Plus, Trash2, Edit2, Lock, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,16 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ROLE_COLORS, ROLE_LABELS } from "@/lib/constants";
+import {
+  APPEARANCE_THEMES,
+  getStoredAppAppearance,
+  setAppAppearance,
+  type AppearanceThemeId,
+} from "@/components/providers/appearance-preference-provider";
+import { getStoredAppFont, setAppFont } from "@/components/providers/font-preference-provider";
+import { RoleAvatar } from "@/components/common/role-avatar";
 
-interface CompanyUser { id: string; name: string; email: string; role: string; status: string; }
+interface CompanyUser { id: string; name: string; email: string; role: string; status: string; avatar?: string | null; }
 interface QuickReply { id: string; title: string; content: string; }
 interface SalesStage { id: string; name: string; color: string; }
 
@@ -79,6 +87,86 @@ const NAV_ITEMS = [
   { id: "facturacion", label: "Planes y Facturación", icon: CreditCard },
 ];
 
+const FONT_OPTIONS = [
+  { label: "Poppins / Redondeado pro", value: "var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif" },
+  { label: "Inter / SaaS moderno", value: "Inter, var(--font-geist-sans), system-ui, sans-serif" },
+  { label: "Geist / Minimal tecnico", value: "var(--font-geist-sans), Inter, system-ui, sans-serif" },
+  { label: "Aptos / Microsoft moderno", value: "Aptos, Calibri, system-ui, sans-serif" },
+  { label: "Segoe UI / Windows nativo", value: "\"Segoe UI\", Aptos, system-ui, sans-serif" },
+  { label: "SF Pro / Apple limpio", value: "\"SF Pro Display\", \"SF Pro Text\", -apple-system, BlinkMacSystemFont, system-ui, sans-serif" },
+  { label: "Roboto / Android familiar", value: "Roboto, Arial, system-ui, sans-serif" },
+  { label: "Roboto Condensed / Denso", value: "\"Roboto Condensed\", Roboto, Arial, sans-serif" },
+  { label: "Open Sans / Corporativo", value: "\"Open Sans\", Arial, system-ui, sans-serif" },
+  { label: "Lato / Amable comercial", value: "Lato, \"Segoe UI\", Arial, sans-serif" },
+  { label: "Montserrat / Premium", value: "Montserrat, \"Segoe UI\", Arial, sans-serif" },
+  { label: "Nunito Sans / Suave", value: "\"Nunito Sans\", Nunito, \"Segoe UI\", sans-serif" },
+  { label: "Source Sans 3 / Editorial UI", value: "\"Source Sans 3\", \"Source Sans Pro\", Arial, sans-serif" },
+  { label: "IBM Plex Sans / Enterprise", value: "\"IBM Plex Sans\", Arial, sans-serif" },
+  { label: "DM Sans / Startup", value: "\"DM Sans\", Inter, Arial, sans-serif" },
+  { label: "Manrope / Dashboard fino", value: "Manrope, Inter, Arial, sans-serif" },
+  { label: "Plus Jakarta Sans / Moderno", value: "\"Plus Jakarta Sans\", Inter, Arial, sans-serif" },
+  { label: "Public Sans / Gobierno pro", value: "\"Public Sans\", Inter, Arial, sans-serif" },
+  { label: "Work Sans / Operativo", value: "\"Work Sans\", Arial, sans-serif" },
+  { label: "Noto Sans / Global", value: "\"Noto Sans\", Arial, sans-serif" },
+  { label: "Ubuntu / Tecnico amable", value: "Ubuntu, Arial, sans-serif" },
+  { label: "Raleway / Elegante", value: "Raleway, \"Segoe UI\", Arial, sans-serif" },
+  { label: "Figtree / Producto SaaS", value: "Figtree, Inter, Arial, sans-serif" },
+  { label: "Outfit / Geometrico", value: "Outfit, Inter, Arial, sans-serif" },
+  { label: "Sora / Futurista serio", value: "Sora, Inter, Arial, sans-serif" },
+  { label: "Mulish / Lectura clara", value: "Mulish, Arial, sans-serif" },
+  { label: "Cabin / Humano", value: "Cabin, Arial, sans-serif" },
+  { label: "Barlow / Compacto", value: "Barlow, Arial, sans-serif" },
+  { label: "Barlow Condensed / Panel denso", value: "\"Barlow Condensed\", Barlow, Arial, sans-serif" },
+  { label: "Archivo / Industrial", value: "Archivo, Arial, sans-serif" },
+  { label: "Archivo Narrow / Tablas", value: "\"Archivo Narrow\", Archivo, Arial, sans-serif" },
+  { label: "Asap / Rapido y claro", value: "Asap, Arial, sans-serif" },
+  { label: "Karla / Cercano", value: "Karla, Arial, sans-serif" },
+  { label: "Rubik / Redondo moderno", value: "Rubik, Arial, sans-serif" },
+  { label: "Lexend / Accesible", value: "Lexend, Arial, sans-serif" },
+  { label: "Urbanist / Elegante moderno", value: "Urbanist, Inter, Arial, sans-serif" },
+  { label: "Red Hat Display / Corporativo", value: "\"Red Hat Display\", \"Red Hat Text\", Arial, sans-serif" },
+  { label: "Red Hat Text / Lectura", value: "\"Red Hat Text\", Arial, sans-serif" },
+  { label: "Helvetica Neue / Clasico premium", value: "\"Helvetica Neue\", Helvetica, Arial, sans-serif" },
+  { label: "Arial / Universal", value: "Arial, Helvetica, sans-serif" },
+  { label: "Trebuchet MS / Amigable", value: "\"Trebuchet MS\", \"Segoe UI\", sans-serif" },
+  { label: "Verdana / Maxima claridad", value: "Verdana, Geneva, sans-serif" },
+  { label: "Tahoma / Compacto Windows", value: "Tahoma, Geneva, sans-serif" },
+  { label: "Calibri / Office familiar", value: "Calibri, Candara, Segoe, sans-serif" },
+  { label: "Candara / Suave Office", value: "Candara, Calibri, Segoe, sans-serif" },
+  { label: "Gill Sans / Ejecutivo", value: "\"Gill Sans\", \"Gill Sans MT\", Calibri, sans-serif" },
+  { label: "Century Gothic / Geometrico", value: "\"Century Gothic\", CenturyGothic, AppleGothic, sans-serif" },
+  { label: "Avenir / Premium limpio", value: "Avenir, \"Avenir Next\", \"Segoe UI\", sans-serif" },
+  { label: "Optima / Sofisticado", value: "Optima, Candara, \"Segoe UI\", sans-serif" },
+  { label: "Georgia / Editorial elegante", value: "Georgia, \"Times New Roman\", serif" },
+];
+
+const CURRENCY_OPTIONS = [
+  ["DOP", "Peso dominicano"],
+  ["USD", "Dólar estadounidense"],
+  ["MXN", "Peso mexicano"],
+  ["COP", "Peso colombiano"],
+  ["EUR", "Euro"],
+  ["CAD", "Dólar canadiense"],
+  ["GBP", "Libra esterlina"],
+  ["BRL", "Real brasileño"],
+  ["ARS", "Peso argentino"],
+  ["CLP", "Peso chileno"],
+  ["PEN", "Sol peruano"],
+  ["CRC", "Colón costarricense"],
+  ["GTQ", "Quetzal guatemalteco"],
+  ["HNL", "Lempira hondureño"],
+  ["NIO", "Córdoba nicaragüense"],
+  ["PAB", "Balboa panameño"],
+  ["UYU", "Peso uruguayo"],
+  ["PYG", "Guaraní paraguayo"],
+  ["BOB", "Boliviano"],
+  ["VES", "Bolívar venezolano"],
+  ["JPY", "Yen japonés"],
+  ["CNY", "Yuan chino"],
+  ["CHF", "Franco suizo"],
+  ["AUD", "Dólar australiano"],
+];
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("empresa");
   const [users, setUsers] = useState<CompanyUser[]>(INITIAL_USERS);
@@ -88,9 +176,58 @@ export default function SettingsPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [editQr, setEditQr] = useState<QuickReply | null>(null);
   const [qrForm, setQrForm] = useState({ title: "", content: "" });
-  const [company, setCompany] = useState({ name: "GreyCRM Demo", slug: "greycrm-demo", email: "admin@greycrm.com", phone: "+52 55 0000 0000", address: "", city: "Ciudad de México", country: "México", currency: "MXN", timezone: "America/Mexico_City" });
+  const [company, setCompany] = useState({ name: "GreyCRM Demo", slug: "greycrm-demo", email: "admin@greycrm.com", phone: "+1 809 000 0000", address: "", city: "Santo Domingo", country: "República Dominicana", currency: "DOP", timezone: "America/Santo_Domingo" });
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [appearance, setAppearance] = useState({ primaryColor: "#3B82F6", secondaryColor: "#8B5CF6", darkMode: false, crmName: "GreyCRM" });
+  const [selectedTheme, setSelectedTheme] = useState<AppearanceThemeId>("grey");
+  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0].value);
   const [inviteForm, setInviteForm] = useState({ email: "", role: "SELLER" });
+
+  useEffect(() => {
+    setSelectedTheme(getStoredAppAppearance());
+    setSelectedFont(getStoredAppFont());
+    setCompanyLogo(localStorage.getItem("greycrm-company-logo"));
+  }, []);
+
+  const applyTheme = (themeId: AppearanceThemeId) => {
+    setSelectedTheme(themeId);
+    setAppAppearance(themeId);
+  };
+
+  const applyFont = (fontFamily: string) => {
+    setSelectedFont(fontFamily);
+    setAppFont(fontFamily);
+  };
+
+  const hexToHsl = (hex: string) => {
+    const normalized = hex.replace("#", "");
+    const r = parseInt(normalized.slice(0, 2), 16) / 255;
+    const g = parseInt(normalized.slice(2, 4), 16) / 255;
+    const b = parseInt(normalized.slice(4, 6), 16) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  };
+
+  const applyPrimaryColor = (color: string) => {
+    setAppearance((current) => ({ ...current, primaryColor: color }));
+    const hsl = hexToHsl(color);
+    document.documentElement.style.setProperty("--primary", hsl);
+    document.documentElement.style.setProperty("--ring", hsl);
+    document.documentElement.style.setProperty("--sidebar-primary", hsl);
+    document.documentElement.style.setProperty("--sidebar-ring", hsl);
+  };
 
   const openQrEdit = (qr: QuickReply | null) => {
     setEditQr(qr);
@@ -113,6 +250,28 @@ export default function SettingsPage() {
     setUsers(prev => [...prev, { id: `u${Date.now()}`, name: inviteForm.email.split("@")[0], email: inviteForm.email, role: inviteForm.role, status: "ACTIVE" }]);
     setInviteOpen(false);
     setInviteForm({ email: "", role: "SELLER" });
+  };
+
+  const handleCompanyLogoUpload = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result);
+      setCompanyLogo(value);
+      localStorage.setItem("greycrm-company-logo", value);
+      window.dispatchEvent(new StorageEvent("storage", { key: "greycrm-company-logo", newValue: value }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUserAvatarUpload = (userId: string, file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result);
+      setUsers((current) => current.map((user) => user.id === userId ? { ...user, avatar: value } : user));
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -143,13 +302,25 @@ export default function SettingsPage() {
                 <div className="space-y-1"><label className="text-sm font-medium">Moneda</label>
                   <Select value={company.currency} onValueChange={v => setCompany(c => ({ ...c, currency: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="MXN">MXN — Peso mexicano</SelectItem><SelectItem value="USD">USD — Dólar</SelectItem><SelectItem value="COP">COP — Peso colombiano</SelectItem></SelectContent>
+                    <SelectContent className="max-h-72">
+                      {CURRENCY_OPTIONS.map(([code, label]) => (
+                        <SelectItem key={code} value={code}>{code} — {label}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1"><label className="text-sm font-medium">Zona horaria</label>
                   <Select value={company.timezone} onValueChange={v => setCompany(c => ({ ...c, timezone: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="America/Mexico_City">Ciudad de México (UTC-6)</SelectItem><SelectItem value="America/Bogota">Bogotá (UTC-5)</SelectItem><SelectItem value="America/Lima">Lima (UTC-5)</SelectItem></SelectContent>
+                    <SelectContent className="max-h-80">
+                      <SelectItem value="America/Santo_Domingo">República Dominicana (UTC-4)</SelectItem>
+                      <SelectItem value="America/New_York">Nueva York / Este (UTC-5)</SelectItem>
+                      <SelectItem value="America/Mexico_City">Ciudad de México (UTC-6)</SelectItem>
+                      <SelectItem value="America/Bogota">Bogotá (UTC-5)</SelectItem>
+                      <SelectItem value="America/Lima">Lima (UTC-5)</SelectItem>
+                      <SelectItem value="America/Panama">Panamá (UTC-5)</SelectItem>
+                      <SelectItem value="Europe/Madrid">Madrid (UTC+1)</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -160,19 +331,84 @@ export default function SettingsPage() {
                   <div className="text-xs text-muted-foreground mt-1">PNG, JPG hasta 2MB</div>
                 </div>
               </div>
+              <label className="flex cursor-pointer items-center gap-4 rounded-xl border bg-muted/30 p-4 transition-colors hover:border-primary">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
+                  {companyLogo ? (
+                    <img src={companyLogo} alt="Logo de la empresa" className="h-full w-full object-cover" />
+                  ) : (
+                    <Building2 className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">Logo visible en la barra lateral</div>
+                  <div className="text-xs text-muted-foreground">Selecciona PNG, JPG o WEBP para personalizar la empresa.</div>
+                </div>
+                <input type="file" accept="image/*" className="hidden" onChange={(event) => handleCompanyLogoUpload(event.target.files?.[0])} />
+              </label>
               <Button className="gap-2"><Check className="w-4 h-4" />Guardar cambios</Button>
             </CardContent></Card>
           </div>
         )}
 
         {activeTab === "apariencia" && (
-          <div className="space-y-6 max-w-2xl">
+          <div className="space-y-6 max-w-5xl">
             <div><h2 className="text-xl font-bold">Apariencia</h2><p className="text-muted-foreground text-sm">Personaliza los colores y estilo del CRM</p></div>
             <Card><CardContent className="pt-6 space-y-6">
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium">Apariencias listas</label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Elige una estética para adaptar el CRM a cada empresa.</p>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                  {APPEARANCE_THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => applyTheme(theme.id)}
+                      className={cn(
+                        "rounded-lg border p-3 text-left transition-all hover:border-primary hover:shadow-sm",
+                        selectedTheme === theme.id && "border-primary ring-2 ring-primary/20"
+                      )}
+                    >
+                      <div className="flex gap-1 mb-3">
+                        {theme.swatches.map((color) => (
+                          <span key={color} className="h-5 flex-1 rounded" style={{ backgroundColor: color }} />
+                        ))}
+                      </div>
+                      <div className="text-sm font-semibold">{theme.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{theme.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tipo de letra del CRM</label>
+                  <Select value={selectedFont} onValueChange={applyFont}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {FONT_OPTIONS.map((font) => (
+                        <SelectItem key={font.value} value={font.value}>{font.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-4" style={{ fontFamily: selectedFont }}>
+                  <div className="text-xs text-muted-foreground mb-2">Vista previa de fuente</div>
+                  <div className="text-xl font-bold">GreyCRM Operaciones</div>
+                  <div className="text-sm text-muted-foreground mt-1">Clientes, ventas, inventario y técnicos en un solo lugar.</div>
+                </div>
+              </div>
+
+              <Separator />
+
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Color principal</label>
-                  <div className="flex gap-3 items-center"><input type="color" value={appearance.primaryColor} onChange={e => setAppearance(a => ({ ...a, primaryColor: e.target.value }))} className="h-12 w-16 rounded-lg cursor-pointer border" /><span className="text-sm font-mono">{appearance.primaryColor}</span></div>
+                  <div className="flex gap-3 items-center"><input type="color" value={appearance.primaryColor} onChange={e => applyPrimaryColor(e.target.value)} className="h-12 w-16 rounded-lg cursor-pointer border" /><span className="text-sm font-mono">{appearance.primaryColor}</span></div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Color secundario</label>
@@ -189,7 +425,7 @@ export default function SettingsPage() {
               </div>
               <div className="p-4 border rounded-lg bg-muted/30">
                 <div className="text-xs font-medium text-muted-foreground mb-3">VISTA PREVIA SIDEBAR</div>
-                <div className="w-48 bg-background border rounded-xl p-3 space-y-1 shadow-sm">
+                <div className="w-64 bg-background border rounded-xl p-3 space-y-2 shadow-sm" style={{ fontFamily: selectedFont }}>
                   <div className="font-bold text-sm px-2 mb-2" style={{ color: appearance.primaryColor }}>{appearance.crmName}</div>
                   {["Dashboard", "Clientes", "Ventas"].map(item => (
                     <div key={item} className="px-2 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2" style={item === "Dashboard" ? { backgroundColor: appearance.primaryColor, color: "white" } : { color: "#64748b" }}>
@@ -214,7 +450,7 @@ export default function SettingsPage() {
                 {users.map(user => (
                   <div key={user.id} className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">{user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</div>
+                      <RoleAvatar name={user.name} role={user.role} src={user.avatar} />
                       <div>
                         <div className="font-medium text-sm">{user.name}</div>
                         <div className="text-xs text-muted-foreground">{user.email}</div>
@@ -223,6 +459,10 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className={`text-xs ${ROLE_COLORS[user.role]}`}>{ROLE_LABELS[user.role]}</Badge>
                       <Badge variant="outline" className={`text-xs ${user.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{user.status === "ACTIVE" ? "Activo" : "Inactivo"}</Badge>
+                      <label className="inline-flex h-8 cursor-pointer items-center rounded-md border px-2 text-xs hover:bg-muted">
+                        Foto
+                        <input type="file" accept="image/*" className="hidden" onChange={(event) => handleUserAvatarUpload(user.id, event.target.files?.[0])} />
+                      </label>
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
                     </div>
                   </div>

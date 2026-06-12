@@ -17,18 +17,20 @@ interface ThemeContextType {
 }
 
 const ThemeContext = React.createContext<ThemeContextType>({
-  theme: "system",
+  theme: "dark",
   setTheme: () => null,
-  resolvedTheme: "light",
+  resolvedTheme: "dark",
 });
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
   storageKey = "greycrm-theme",
 }: ThemeProviderProps) {
   const [theme, setThemeState] = React.useState<Theme>(defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = React.useState<"light" | "dark">("light");
+  const [resolvedTheme, setResolvedTheme] = React.useState<"light" | "dark">(
+    defaultTheme === "light" ? "light" : "dark"
+  );
 
   React.useEffect(() => {
     const stored = localStorage.getItem(storageKey) as Theme | null;

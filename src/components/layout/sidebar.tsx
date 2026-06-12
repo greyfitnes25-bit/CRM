@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -15,6 +15,7 @@ import {
   FileText,
   ShoppingCart,
   Wrench,
+  Map,
   Shield,
   RotateCcw,
   TrendingUp,
@@ -22,7 +23,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
   LogOut,
   User,
   ShieldCheck,
@@ -43,6 +43,7 @@ const navItems = [
   { href: "/quotes", label: "Cotizaciones", icon: FileText },
   { href: "/sales", label: "Ventas", icon: ShoppingCart },
   { href: "/installations", label: "Instalaciones", icon: Wrench },
+  { href: "/team-map", label: "Mapa Equipo", icon: Map },
   { href: "/warranties", label: "Garantías", icon: Shield },
   { href: "/returns", label: "Devoluciones", icon: RotateCcw },
   { href: "/meta-ads", label: "Meta Ads", icon: TrendingUp },
@@ -64,32 +65,44 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const pathname = usePathname();
   const { data: session } = useSession();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
+  useEffect(() => {
+    const syncLogo = () => setCompanyLogo(localStorage.getItem("greycrm-company-logo"));
+    syncLogo();
+    window.addEventListener("storage", syncLogo);
+    return () => window.removeEventListener("storage", syncLogo);
+  }, []);
+
   return (
     <aside
       className={cn(
         "relative flex flex-col h-full transition-all duration-300 ease-in-out",
-        "bg-slate-900 border-r border-slate-800",
+        "border-r bg-[hsl(var(--sidebar-background))] border-[hsl(var(--sidebar-border))]",
         collapsed ? "w-16" : "w-64",
         className
       )}
     >
       {/* Logo */}
       <div className={cn(
-        "flex items-center h-16 px-4 border-b border-slate-800 shrink-0",
+        "flex items-center h-16 px-4 border-b border-[hsl(var(--sidebar-border))] shrink-0",
         collapsed ? "justify-center" : "gap-3"
       )}>
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 shrink-0 shadow-lg shadow-blue-500/30">
-          <Zap className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-orange-300/60 shrink-0 shadow-lg shadow-orange-500/15 ring-1 ring-blue-500/20 overflow-hidden">
+          {companyLogo ? (
+            <img src={companyLogo} alt="Logo" className="h-full w-full object-contain p-1" />
+          ) : (
+            <img src="/branding/greycrm-mark.png" alt="GreyCRM" className="h-full w-full object-contain p-1.5" />
+          )}
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <span className="text-white font-bold text-lg leading-none block">GreyCRM</span>
-            <span className="text-slate-400 text-xs">
+            <span className="text-[hsl(var(--sidebar-foreground))] font-bold text-lg leading-none block">GreyCRM</span>
+            <span className="text-[hsl(var(--sidebar-foreground))]/60 text-xs">
               {session?.user?.companyName || "Mi Empresa"}
             </span>
           </div>
@@ -99,7 +112,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Toggle button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 z-10 w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors shadow-sm"
+        className="absolute -right-3 top-20 z-10 w-6 h-6 rounded-full bg-[hsl(var(--sidebar-accent))] border border-[hsl(var(--sidebar-border))] flex items-center justify-center text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] transition-colors shadow-sm"
       >
         {collapsed ? (
           <ChevronRight className="w-3 h-3" />
@@ -122,8 +135,8 @@ export function Sidebar({ className }: SidebarProps) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group relative",
                   active
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800",
+                    ? "bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] shadow-lg shadow-black/15"
+                    : "text-[hsl(var(--sidebar-foreground))]/65 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]",
                   collapsed && "justify-center px-2"
                 )}
                 title={collapsed ? item.label : undefined}
@@ -131,20 +144,20 @@ export function Sidebar({ className }: SidebarProps) {
                 <Icon className={cn(
                   "shrink-0 transition-colors",
                   collapsed ? "w-5 h-5" : "w-4 h-4",
-                  active ? "text-white" : "text-slate-400 group-hover:text-white"
+                  active ? "text-[hsl(var(--sidebar-primary-foreground))]" : "text-[hsl(var(--sidebar-foreground))]/65 group-hover:text-[hsl(var(--sidebar-foreground))]"
                 )} />
                 {!collapsed && (
                   <>
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge && (
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-xs font-bold">
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] text-xs font-bold">
                         {item.badge}
                       </span>
                     )}
                   </>
                 )}
                 {collapsed && item.badge && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[hsl(var(--sidebar-primary))]" />
                 )}
               </Link>
             );
@@ -152,7 +165,7 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
 
         {/* Divider */}
-        <div className="mx-4 my-4 border-t border-slate-800" />
+        <div className="mx-4 my-4 border-t border-[hsl(var(--sidebar-border))]" />
 
         {/* Bottom nav */}
         <div className="space-y-1 px-2">
@@ -167,8 +180,8 @@ export function Sidebar({ className }: SidebarProps) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
                   active
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800",
+                    ? "bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))]"
+                    : "text-[hsl(var(--sidebar-foreground))]/65 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]",
                   collapsed && "justify-center px-2"
                 )}
                 title={collapsed ? item.label : undefined}
@@ -184,10 +197,10 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
 
         {/* SuperAdmin divider + link */}
-        <div className="mx-4 my-4 border-t border-slate-700" />
+        <div className="mx-4 my-4 border-t border-[hsl(var(--sidebar-border))]" />
         {!collapsed && (
           <div className="px-4 mb-2">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Plataforma</span>
+            <span className="text-xs font-semibold text-[hsl(var(--sidebar-foreground))]/45 uppercase tracking-wider">Plataforma</span>
           </div>
         )}
         <div className="space-y-1 px-2">
@@ -221,19 +234,19 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* User section */}
       <div className={cn(
-        "border-t border-slate-800 p-3 shrink-0",
+        "border-t border-[hsl(var(--sidebar-border))] p-3 shrink-0",
       )}>
         {collapsed ? (
           <div className="flex flex-col items-center gap-2">
             <Avatar className="w-8 h-8">
               <AvatarImage src={session?.user?.avatar || undefined} />
-              <AvatarFallback className="bg-blue-600 text-white text-xs">
+              <AvatarFallback className="bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] text-xs">
                 {getInitials(session?.user?.name || "U")}
               </AvatarFallback>
             </Avatar>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-slate-400 hover:text-red-400 transition-colors"
+              className="text-[hsl(var(--sidebar-foreground))]/65 hover:text-red-400 transition-colors"
               title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
@@ -243,21 +256,21 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="flex items-center gap-3">
             <Avatar className="w-9 h-9 shrink-0">
               <AvatarImage src={session?.user?.avatar || undefined} />
-              <AvatarFallback className="bg-blue-600 text-white text-sm">
+              <AvatarFallback className="bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] text-sm">
                 {getInitials(session?.user?.name || "U")}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">
+              <p className="text-[hsl(var(--sidebar-foreground))] text-sm font-medium truncate">
                 {session?.user?.name || "Usuario"}
               </p>
-              <p className="text-slate-400 text-xs truncate">
+              <p className="text-[hsl(var(--sidebar-foreground))]/60 text-xs truncate">
                 {ROLE_LABELS[(session?.user?.role as string) || "SELLER"] || "Vendedor"}
               </p>
             </div>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded"
+              className="text-[hsl(var(--sidebar-foreground))]/65 hover:text-red-400 transition-colors p-1 rounded"
               title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Search, Plus, Grid3X3, List, Edit2, Share2, Package, Shield,
@@ -22,6 +22,7 @@ interface Product {
   description: string;
   price: number;
   category: string;
+  image?: string | null;
   isAvailable: boolean;
   requiresInstallation: boolean;
   warrantyMonths: number;
@@ -59,12 +60,12 @@ const INITIAL_PRODUCTS: Product[] = [
 ];
 
 const EMPTY_FORM: Omit<Product, "id"> = {
-  name: "", description: "", price: 0, category: "Seguridad",
+  name: "", description: "", price: 0, category: "Seguridad", image: "",
   isAvailable: true, requiresInstallation: false, warrantyMonths: 12
 };
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [availabilityFilter, setAvailabilityFilter] = useState("ALL");
@@ -72,6 +73,30 @@ export default function ProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<Omit<Product, "id">>(EMPTY_FORM);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/products", { cache: "no-store" });
+      if (!response.ok) throw new Error("No se pudo cargar el catálogo");
+      const data = await response.json();
+      setProducts(data);
+    } catch (err) {
+      console.error(err);
+      setError("Mostrando catálogo de demo: no se pudo conectar con la base de datos.");
+      setProducts(INITIAL_PRODUCTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
@@ -83,28 +108,61 @@ export default function ProductsPage() {
   const openCreate = () => { setEditingProduct(null); setForm(EMPTY_FORM); setDialogOpen(true); };
   const openEdit = (p: Product) => {
     setEditingProduct(p);
-    setForm({ name: p.name, description: p.description, price: p.price, category: p.category, isAvailable: p.isAvailable, requiresInstallation: p.requiresInstallation, warrantyMonths: p.warrantyMonths });
+    setForm({ name: p.name, description: p.description, price: p.price, category: p.category, image: p.image ?? "", isAvailable: p.isAvailable, requiresInstallation: p.requiresInstallation, warrantyMonths: p.warrantyMonths });
     setDialogOpen(true);
   };
-  const saveProduct = () => {
-    if (editingProduct) {
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...form } : p));
-    } else {
-      setProducts(prev => [{ ...form, id: `p${Date.now()}` }, ...prev]);
+  const saveProduct = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(editingProduct ? `/api/products/${editingProduct.id}` : "/api/products", {
+        method: editingProduct ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!response.ok) throw new Error("No se pudo guardar el producto");
+      await loadProducts();
+      setDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo guardar el producto. Revisa PostgreSQL y vuelve a intentar.");
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
   };
-  const toggleAvailability = (id: string) => setProducts(prev => prev.map(p => p.id === id ? { ...p, isAvailable: !p.isAvailable } : p));
+  const toggleAvailability = async (product: Product) => {
+    const nextValue = !product.isAvailable;
+    setProducts(prev => prev.map(p => p.id === product.id ? { ...p, isAvailable: nextValue } : p));
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isAvailable: nextValue }),
+      });
+      if (!response.ok) throw new Error("No se pudo actualizar disponibilidad");
+    } catch (err) {
+      console.error(err);
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, isAvailable: product.isAvailable } : p));
+      setError("No se pudo actualizar la disponibilidad del producto.");
+    }
+  };
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Productos</h1>
-          <p className="text-muted-foreground text-sm">{products.length} productos en catálogo</p>
+          <p className="text-muted-foreground text-sm">{loading ? "Cargando catálogo..." : `${products.length} productos en catálogo`}</p>
         </div>
         <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Nuevo Producto</Button>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-3 items-center flex-wrap">
         <div className="relative flex-1 min-w-64">
@@ -139,8 +197,12 @@ export default function ProductsPage() {
             return (
               <motion.div key={product.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className={`h-full flex flex-col transition-all hover:shadow-md ${!product.isAvailable ? "opacity-60" : ""}`}>
-                  <div className="h-36 rounded-t-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                    <Icon className="w-16 h-16 text-slate-400" />
+                  <div className="h-36 rounded-t-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden">
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <Icon className="w-16 h-16 text-slate-400" />
+                    )}
                   </div>
                   <CardContent className="flex flex-col flex-1 pt-4 gap-3">
                     <div>
@@ -156,7 +218,7 @@ export default function ProductsPage() {
                     <Separator />
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Switch checked={product.isAvailable} onCheckedChange={() => toggleAvailability(product.id)} />
+                        <Switch checked={product.isAvailable} onCheckedChange={() => void toggleAvailability(product)} />
                         <span className="text-xs text-muted-foreground">{product.isAvailable ? "Activo" : "Inactivo"}</span>
                       </div>
                       <div className="flex gap-1">
@@ -190,7 +252,13 @@ export default function ProductsPage() {
                     <tr key={product.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"><Icon className="w-5 h-5 text-muted-foreground" /></div>
+                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                            {product.image ? (
+                              <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <Icon className="w-5 h-5 text-muted-foreground" />
+                            )}
+                          </div>
                           <div><div className="font-medium">{product.name}</div><div className="text-xs text-muted-foreground line-clamp-1">{product.description}</div></div>
                         </div>
                       </td>
@@ -199,7 +267,7 @@ export default function ProductsPage() {
                       <td className="p-4">{product.requiresInstallation ? <Check className="w-4 h-4 text-green-500" /> : <X className="w-4 h-4 text-muted-foreground" />}</td>
                       <td className="p-4 text-muted-foreground">{product.warrantyMonths > 0 ? `${product.warrantyMonths} meses` : "—"}</td>
                       <td className="p-4">
-                        <Switch checked={product.isAvailable} onCheckedChange={() => toggleAvailability(product.id)} />
+                        <Switch checked={product.isAvailable} onCheckedChange={() => void toggleAvailability(product)} />
                       </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-1">
@@ -228,6 +296,33 @@ export default function ProductsPage() {
               <label className="text-sm font-medium">Descripción</label>
               <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descripción detallada..." rows={3} />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_140px] gap-4">
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Imagen del producto</label>
+                  <Input value={form.image ?? ""} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} placeholder="https://.../producto.jpg" />
+                </div>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => setForm(f => ({ ...f, image: String(reader.result) }));
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">Puedes pegar una URL o seleccionar una imagen local para vista previa.</p>
+              </div>
+              <div className="h-32 rounded-lg border bg-muted/40 flex items-center justify-center overflow-hidden">
+                {form.image ? (
+                  <img src={form.image} alt="Vista previa" className="h-full w-full object-cover" />
+                ) : (
+                  <Package className="w-10 h-10 text-muted-foreground" />
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Precio *</label>
@@ -252,7 +347,9 @@ export default function ProductsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={saveProduct} disabled={!form.name}><Check className="w-4 h-4 mr-2" />{editingProduct ? "Guardar cambios" : "Crear producto"}</Button>
+            <Button onClick={saveProduct} disabled={!form.name || saving}>
+              <Check className="w-4 h-4 mr-2" />{saving ? "Guardando..." : editingProduct ? "Guardar cambios" : "Crear producto"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

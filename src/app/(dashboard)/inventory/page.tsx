@@ -33,6 +33,7 @@ interface InventoryItem {
   id: string;
   productId: string;
   productName: string;
+  image?: string;
   sku: string;
   category: string;
   currentStock: number;
@@ -418,9 +419,18 @@ export default function InventoryPage() {
               return (
                 <div key={item.id} className="p-4 rounded-xl border border-border bg-card">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm truncate">{item.productName}</div>
-                      <div className="text-xs text-muted-foreground">{item.sku} · {item.category}</div>
+                    <div className="flex flex-1 min-w-0 gap-3">
+                      <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                        {item.image ? (
+                          <img src={item.image} alt={item.productName} className="h-full w-full object-cover" />
+                        ) : (
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm truncate">{item.productName}</div>
+                        <div className="text-xs text-muted-foreground">{item.sku} · {item.category}</div>
+                      </div>
                     </div>
                     {status === "OUT" && (
                       <Badge className="bg-red-100 text-red-700 border-0 text-xs shrink-0">SIN STOCK</Badge>
@@ -481,8 +491,19 @@ export default function InventoryPage() {
                     return (
                       <tr key={item.id} className="border-b hover:bg-muted/30 transition-colors group">
                         <td className="p-4">
-                          <div className="font-medium">{item.productName}</div>
-                          <div className="text-xs text-muted-foreground font-mono">{item.sku}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                              {item.image ? (
+                                <img src={item.image} alt={item.productName} className="h-full w-full object-cover" />
+                              ) : (
+                                <Package className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium">{item.productName}</div>
+                              <div className="text-xs text-muted-foreground font-mono">{item.sku}</div>
+                            </div>
+                          </div>
                         </td>
                         <td className="p-4">
                           <Badge variant="outline" className="text-xs">{item.category}</Badge>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, Eye, CreditCard, DollarSign, TrendingUp, Clock, Check, Printer } from "lucide-react";
+import { Search, Plus, Eye, CreditCard, DollarSign, TrendingUp, Clock, Check, Printer, Target, WalletCards, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -33,13 +33,38 @@ const INITIAL_SALES: Sale[] = [
 const PAYMENT_METHODS = ["Efectivo", "Transferencia", "Tarjeta", "Crédito"];
 
 export default function SalesPage() {
-  const [sales, setSales] = useState<Sale[]>(INITIAL_SALES);
+  const [sales, setSales] = useState<Sale[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [detailSale, setDetailSale] = useState<Sale | null>(null);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("Efectivo");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const loadSales = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/sales", { cache: "no-store" });
+      if (!response.ok) throw new Error("No se pudieron cargar las ventas");
+      const data = await response.json();
+      setSales(data);
+    } catch (err) {
+      console.error(err);
+      setError("Mostrando ventas de demo: no se pudo conectar con la base de datos.");
+      setSales(INITIAL_SALES);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSales();
+  }, []);
 
   const filtered = sales.filter(s => {
     const matchSearch = s.customerName.toLowerCase().includes(search.toLowerCase()) || s.number.includes(search);
@@ -52,41 +77,75 @@ export default function SalesPage() {
   const avgTicket = sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.total, 0) / sales.length) : 0;
   const thisMonthSales = sales.filter(s => s.date.startsWith("2026-06")).length;
 
-  const addPayment = () => {
+  const addPayment = async () => {
     if (!detailSale) return;
     const amount = parseFloat(payAmount);
     if (!amount) return;
-    setSales(prev => prev.map(s => {
-      if (s.id !== detailSale.id) return s;
-      const newPaid = s.paid + amount;
-      const newStatus = newPaid >= s.total ? "PAID" : "PARTIAL";
-      const updated = { ...s, paid: newPaid, status: newStatus, payments: [...s.payments, { amount, method: payMethod, date: new Date().toISOString().split("T")[0] }] };
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/sales/${detailSale.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentAmount: amount, paymentMethod: payMethod }),
+      });
+      if (!response.ok) throw new Error("No se pudo registrar el pago");
+      const updated = await response.json();
+      setSales(prev => prev.map(s => s.id === updated.id ? updated : s));
       setDetailSale(updated);
-      return updated;
-    }));
-    setPaymentDialogOpen(false);
-    setPayAmount("");
+      setPaymentDialogOpen(false);
+      setPayAmount("");
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo registrar el pago.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2500);
   };
 
   const stats = [
-    { label: "Ventas este mes", value: thisMonthSales, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Ingresos totales", value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Pagos pendientes", value: `$${totalPending.toLocaleString()}`, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
-    { label: "Ticket promedio", value: `$${avgTicket.toLocaleString()}`, icon: CreditCard, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Ventas este mes", value: thisMonthSales, icon: Target, color: "text-blue-500", iconBg: "bg-blue-500/15", border: "border-blue-500/30", bg: "bg-gradient-to-br from-blue-500/10 via-card to-sky-500/5", action: () => { setStatusFilter("ALL"); showToast("Mostrando ventas del mes"); } },
+    { label: "Ingresos totales", value: `$${totalRevenue.toLocaleString()}`, icon: Banknote, color: "text-emerald-500", iconBg: "bg-emerald-500/15", border: "border-emerald-500/30", bg: "bg-gradient-to-br from-emerald-500/10 via-card to-green-500/5", action: () => { setStatusFilter("PAID"); showToast("Filtro aplicado: ventas pagadas"); } },
+    { label: "Pagos pendientes", value: `$${totalPending.toLocaleString()}`, icon: Clock, color: "text-orange-500", iconBg: "bg-orange-500/15", border: "border-orange-500/30", bg: "bg-gradient-to-br from-orange-500/10 via-card to-amber-500/5", action: () => { setStatusFilter("PENDING"); showToast("Filtro aplicado: pagos pendientes"); } },
+    { label: "Ticket promedio", value: `$${avgTicket.toLocaleString()}`, icon: WalletCards, color: "text-purple-500", iconBg: "bg-purple-500/15", border: "border-purple-500/30", bg: "bg-gradient-to-br from-purple-500/10 via-card to-fuchsia-500/5", action: () => showToast("Ticket promedio calculado con las ventas visibles") },
   ];
 
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">Ventas</h1><p className="text-muted-foreground text-sm">{sales.length} ventas registradas</p></div>
-        <Button className="gap-2"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Venta</span><span className="sm:hidden">Nueva</span></Button>
+        <div><h1 className="text-2xl font-bold">Ventas</h1><p className="text-muted-foreground text-sm">{loading ? "Cargando ventas..." : `${sales.length} ventas registradas`}</p></div>
+        <Button className="gap-2" onClick={() => showToast("Nueva venta: el formulario completo sera conectado en la siguiente fase.")}><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Venta</span><span className="sm:hidden">Nueva</span></Button>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {error}
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed right-4 top-20 z-50 rounded-lg border border-primary/20 bg-background px-3 py-2 text-sm shadow-lg">
+          {toast}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map(stat => (
-          <Card key={stat.label}>
+          <Card
+            key={stat.label}
+            role="button"
+            tabIndex={0}
+            onClick={stat.action}
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") stat.action(); }}
+            className={`cursor-pointer border transition hover:-translate-y-0.5 hover:shadow-lg ${stat.border} ${stat.bg}`}
+          >
             <CardContent className="p-4 flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${stat.bg} shrink-0`}><stat.icon className={`w-5 h-5 ${stat.color}`} /></div>
+              <div className={`p-3 rounded-xl ${stat.iconBg} shrink-0 ring-1 ring-white/10`}><stat.icon className={`w-5 h-5 ${stat.color}`} /></div>
               <div><div className={`text-xl font-bold ${stat.color}`}>{stat.value}</div><div className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</div></div>
             </CardContent>
           </Card>
@@ -241,7 +300,7 @@ export default function SalesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={addPayment} disabled={!payAmount}><Check className="w-4 h-4 mr-2" />Confirmar pago</Button>
+            <Button onClick={addPayment} disabled={!payAmount || saving}><Check className="w-4 h-4 mr-2" />{saving ? "Guardando..." : "Confirmar pago"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
