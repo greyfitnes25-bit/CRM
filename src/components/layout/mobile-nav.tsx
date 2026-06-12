@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   MessageSquare,
+  Bot,
   Users,
   Wrench,
   MoreHorizontal,
@@ -29,8 +30,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 const MAIN_TABS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/messages", label: "Mensajes", icon: MessageSquare, badge: 3 },
+  { href: "/ai-agents", label: "IA", icon: Bot },
   { href: "/customers", label: "Clientes", icon: Users },
-  { href: "/installations", label: "Instalaciones", icon: Wrench },
 ];
 
 const MORE_ITEMS = [
@@ -39,6 +40,7 @@ const MORE_ITEMS = [
   { href: "/inventory", label: "Inventario", icon: Package2 },
   { href: "/quotes", label: "Cotizaciones", icon: FileText },
   { href: "/sales", label: "Ventas", icon: ShoppingCart },
+  { href: "/installations", label: "Instalaciones", icon: Wrench },
   { href: "/team-map", label: "Mapa Equipo", icon: Map },
   { href: "/warranties", label: "Garantías", icon: Shield },
   { href: "/returns", label: "Devoluciones", icon: RotateCcw },

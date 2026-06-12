@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   MessageSquare,
+  Bot,
   Target,
   Users,
   Package,
@@ -37,6 +38,7 @@ import { signOut } from "next-auth/react";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/messages", label: "Mensajes", icon: MessageSquare, badge: 3 },
+  { href: "/ai-agents", label: "IA / Calidad", icon: Bot, badge: "AI" },
   { href: "/leads", label: "Leads / Embudo", icon: Target },
   { href: "/customers", label: "Clientes", icon: Users },
   { href: "/products", label: "Productos", icon: Package },
