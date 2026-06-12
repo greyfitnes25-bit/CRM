@@ -536,6 +536,13 @@
   background: linear-gradient(135deg, rgba(219, 234, 254, 0.96), rgba(255, 255, 255, 0.84));
 }
 
+.day-data-satellite-four {
+  --orbit-radius: 118px;
+  --orbit-start: 226deg;
+  animation-duration: 27s;
+  background: linear-gradient(135deg, rgba(219, 234, 254, 0.98), rgba(255, 255, 255, 0.84));
+}
+
 .day-light-sweep {
   z-index: 3;
   width: 170px;

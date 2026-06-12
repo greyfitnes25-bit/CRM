@@ -66,10 +66,11 @@ const monthlyData = [
 ];
 
 const leadsByChannel: Array<{ key: ChannelLogoId; name: string; value: number; color: string }> = [
-  { key: "WHATSAPP", name: "WhatsApp", value: 42, color: "#25D366" },
-  { key: "INSTAGRAM", name: "Instagram", value: 28, color: "#E1306C" },
-  { key: "META_ADS", name: "Meta Ads", value: 18, color: "#1877F2" },
-  { key: "REFERRAL", name: "Referidos", value: 8, color: "#F59E0B" },
+  { key: "WHATSAPP", name: "WhatsApp", value: 38, color: "#25D366" },
+  { key: "INSTAGRAM", name: "Instagram", value: 25, color: "#E1306C" },
+  { key: "MESSENGER", name: "Messenger", value: 12, color: "#0084FF" },
+  { key: "META_ADS", name: "Meta Ads", value: 15, color: "#1877F2" },
+  { key: "REFERRAL", name: "Referidos", value: 6, color: "#F59E0B" },
   { key: "WEB", name: "Web", value: 4, color: "#6366F1" },
 ];
 
@@ -479,6 +480,9 @@ export default function DashboardPage() {
             </span>
             <span className="day-data-satellite day-data-satellite-three absolute left-1/2 top-[138px]">
               <img src="/social/meta.webp" alt="" />
+            </span>
+            <span className="day-data-satellite day-data-satellite-four absolute left-1/2 top-[138px]">
+              <img src="/social/messenger.png" alt="" />
             </span>
             <span className="day-light-sweep absolute -left-20 top-20" />
           </div>
