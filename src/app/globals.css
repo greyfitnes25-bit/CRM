@@ -417,6 +417,11 @@
     0 18px 44px rgba(15, 23, 42, 0.08);
 }
 
+.channel-day-scene {
+  top: 80px;
+  height: 270px;
+}
+
 .day-earth-horizon {
   height: 178px;
   z-index: 0;
