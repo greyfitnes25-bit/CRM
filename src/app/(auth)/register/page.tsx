@@ -66,7 +66,7 @@ export default function RegisterPage() {
       {/* Logo */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-950/70 border border-white/10 mb-4 shadow-2xl shadow-orange-500/20">
-          <img src="/branding/greycrm-mark.png" alt="GreyCRM" className="h-16 w-16 object-contain" />
+          <img src="/branding/greycrm-isotipo.png" alt="GreyCRM" className="h-16 w-16 object-contain" />
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">GreyCRM</h1>
         <p className="text-slate-400 mt-1 text-sm">Crea tu cuenta gratis</p>

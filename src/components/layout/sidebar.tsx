@@ -96,7 +96,7 @@ export function Sidebar({ className }: SidebarProps) {
           {companyLogo ? (
             <img src={companyLogo} alt="Logo" className="h-full w-full object-contain p-1" />
           ) : (
-            <img src="/branding/greycrm-mark.png" alt="GreyCRM" className="h-full w-full object-contain p-1.5" />
+            <img src="/branding/greycrm-isotipo.png" alt="GreyCRM" className="h-full w-full object-contain p-1.5" />
           )}
         </div>
         {!collapsed && (
