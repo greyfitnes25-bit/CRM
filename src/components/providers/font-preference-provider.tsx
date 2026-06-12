@@ -15,6 +15,8 @@ function applyFont(fontFamily: string) {
   const value = sanitizeFont(fontFamily);
   document.documentElement.style.setProperty("--app-font-family", value);
   document.documentElement.dataset.appFont = value;
+  document.body?.style.setProperty("--app-font-family", value);
+  document.body?.style.setProperty("font-family", value);
 }
 
 export function FontPreferenceProvider({ children }: { children: React.ReactNode }) {

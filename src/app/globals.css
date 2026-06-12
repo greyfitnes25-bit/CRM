@@ -73,7 +73,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--app-font-family);
+    --app-font-family: var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif;
+    font-family: var(--app-font-family) !important;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 

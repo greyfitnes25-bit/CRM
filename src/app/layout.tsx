@@ -70,6 +70,10 @@ export default function RootLayout({
                     storedFont = defaultFont;
                   }
                   document.documentElement.style.setProperty("--app-font-family", storedFont);
+                  if (document.body) {
+                    document.body.style.setProperty("--app-font-family", storedFont);
+                    document.body.style.setProperty("font-family", storedFont);
+                  }
                 } catch (error) {}
               })();
             `,
