@@ -98,10 +98,15 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const requestedChannel = new URLSearchParams(window.location.search).get("channel")?.toUpperCase();
+    const requestedConversation = new URLSearchParams(window.location.search).get("conversation");
     const validChannels: Channel[] = ["ALL", "WHATSAPP", "INSTAGRAM", "MESSENGER", "META_ADS", "WEB"];
     if (requestedChannel && validChannels.includes(requestedChannel as Channel)) {
       setChannelFilter(requestedChannel as Channel);
       setShowMobileList(true);
+    }
+    if (requestedConversation && DEMO_CONVERSATIONS.some((conversation) => conversation.id === requestedConversation)) {
+      setSelectedId(requestedConversation);
+      setShowMobileList(false);
     }
   }, []);
 

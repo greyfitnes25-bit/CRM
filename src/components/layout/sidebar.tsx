@@ -66,20 +66,46 @@ interface SidebarProps {
   className?: string;
 }
 
+const PROFILE_KEY = "greycrm-profile-demo";
+
+type StoredProfile = {
+  name?: string;
+  email?: string;
+  position?: string;
+  avatar?: string | null;
+};
+
 export function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [profile, setProfile] = useState<StoredProfile | null>(null);
   const pathname = usePathname();
   const { data: session } = useSession();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   useEffect(() => {
-    const syncLogo = () => setCompanyLogo(localStorage.getItem("greycrm-company-logo"));
-    syncLogo();
-    window.addEventListener("storage", syncLogo);
-    return () => window.removeEventListener("storage", syncLogo);
+    const syncProfileShell = () => {
+      setCompanyLogo(localStorage.getItem("greycrm-company-logo"));
+      try {
+        const stored = localStorage.getItem(PROFILE_KEY);
+        setProfile(stored ? JSON.parse(stored) : null);
+      } catch {
+        setProfile(null);
+      }
+    };
+    syncProfileShell();
+    window.addEventListener("storage", syncProfileShell);
+    window.addEventListener("greycrm-profile-updated", syncProfileShell);
+    return () => {
+      window.removeEventListener("storage", syncProfileShell);
+      window.removeEventListener("greycrm-profile-updated", syncProfileShell);
+    };
   }, []);
+
+  const displayName = profile?.name || session?.user?.name || "Usuario";
+  const displayRole = profile?.position || ROLE_LABELS[(session?.user?.role as string) || "SELLER"] || "Vendedor";
+  const displayAvatar = profile?.avatar || session?.user?.avatar || undefined;
 
   return (
     <aside
@@ -242,9 +268,9 @@ export function Sidebar({ className }: SidebarProps) {
         {collapsed ? (
           <div className="flex flex-col items-center gap-2">
             <Avatar className="w-8 h-8">
-              <AvatarImage src={session?.user?.avatar || undefined} />
+              <AvatarImage src={displayAvatar} />
               <AvatarFallback className="bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] text-xs">
-                {getInitials(session?.user?.name || "U")}
+                {getInitials(displayName)}
               </AvatarFallback>
             </Avatar>
             <button
@@ -258,17 +284,17 @@ export function Sidebar({ className }: SidebarProps) {
         ) : (
           <div className="flex items-center gap-3">
             <Avatar className="w-9 h-9 shrink-0">
-              <AvatarImage src={session?.user?.avatar || undefined} />
+              <AvatarImage src={displayAvatar} />
               <AvatarFallback className="bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] text-sm">
-                {getInitials(session?.user?.name || "U")}
+                {getInitials(displayName)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-[hsl(var(--sidebar-foreground))] text-sm font-medium truncate">
-                {session?.user?.name || "Usuario"}
+                {displayName}
               </p>
               <p className="text-[hsl(var(--sidebar-foreground))]/60 text-xs truncate">
-                {ROLE_LABELS[(session?.user?.role as string) || "SELLER"] || "Vendedor"}
+                {displayRole}
               </p>
             </div>
             <button

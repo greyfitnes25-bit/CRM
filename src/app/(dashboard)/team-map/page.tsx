@@ -107,10 +107,13 @@ function markerPosition(lat: number, lng: number) {
   };
 }
 
-function osmEmbedUrl(lat: number, lng: number) {
-  const marker = `${lat.toFixed(5)}%2C${lng.toFixed(5)}`;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=-72.15%2C17.45%2C-68.15%2C20.05&layer=mapnik&marker=${marker}`;
-}
+const MAP_TILES = Array.from({ length: 3 }, (_, row) =>
+  Array.from({ length: 4 }, (_, col) => ({
+    x: 76 + col,
+    y: 113 + row,
+    url: `https://tile.openstreetmap.org/8/${76 + col}/${113 + row}.png`,
+  }))
+).flat();
 
 export default function TeamMapPage() {
   const [selectedId, setSelectedId] = useState(TEAM[0].id);
@@ -191,15 +194,20 @@ export default function TeamMapPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="relative h-[540px] overflow-hidden bg-slate-100 dark:bg-slate-950">
-              <iframe
-                key={selected.id}
-                title="Mapa real de Republica Dominicana"
-                src={osmEmbedUrl(selected.lat, selected.lng)}
-                className="absolute inset-0 h-full w-full border-0 grayscale-[12%] saturate-110"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-background/5 via-transparent to-background/40" />
+              <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 opacity-95 saturate-110 dark:brightness-75 dark:saturate-125">
+                {MAP_TILES.map((tile) => (
+                  <img
+                    key={`${tile.x}-${tile.y}`}
+                    src={tile.url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                ))}
+              </div>
+              <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-background/10 via-transparent to-background/45" />
+              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_52%_48%,transparent_0_38%,rgba(59,130,246,0.10)_62%,rgba(15,23,42,0.08)_100%)]" />
               <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-border/60" />
               <div className="absolute left-4 top-4 rounded-2xl border bg-background/90 p-3 shadow-lg backdrop-blur">
                 <div className="text-xs text-muted-foreground">Centro de operaciones</div>

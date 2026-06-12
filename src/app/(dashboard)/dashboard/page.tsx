@@ -84,10 +84,10 @@ type SantoDomingoLiveStatus = {
 };
 
 const defaultLiveStatus: SantoDomingoLiveStatus = {
-  time: "--:--",
-  usdRate: "RD$ --",
+  time: "Actualizando",
+  usdRate: "RD$ 59.00",
   weather: "Santo Domingo",
-  temperature: "--",
+  temperature: "27°C",
   condition: "sunny",
 };
 
@@ -99,16 +99,6 @@ const messageChannelTarget: Partial<Record<ChannelLogoId, string>> = {
   WEB: "WEB",
   REFERRAL: "WEB",
 };
-
-function weatherCodeToStatus(code: number): Pick<SantoDomingoLiveStatus, "weather" | "condition"> {
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code)) {
-    return { weather: "Lluvia en SD", condition: "rainy" };
-  }
-  if ([1, 2, 3, 45, 48].includes(code)) {
-    return { weather: "Nublado en SD", condition: "cloudy" };
-  }
-  return { weather: "Soleado en SD", condition: "sunny" };
-}
 
 const funnelData = [
   { stage: "Nuevo Lead", count: 85, percentage: 100, color: "bg-blue-500" },
@@ -416,35 +406,19 @@ export default function DashboardPage() {
     const loadLiveData = async () => {
       updateClock();
       try {
-        const [weatherResponse, rateResponse] = await Promise.allSettled([
-          fetch("https://api.open-meteo.com/v1/forecast?latitude=18.4861&longitude=-69.9312&current=temperature_2m,weather_code&timezone=America%2FSanto_Domingo", { cache: "no-store" }),
-          fetch("https://open.er-api.com/v6/latest/USD", { cache: "no-store" }),
-        ]);
-
+        const response = await fetch("/api/live/santo-domingo", { cache: "no-store" });
         if (!active) return;
-
-        let nextStatus: Partial<SantoDomingoLiveStatus> = {};
-
-        if (weatherResponse.status === "fulfilled" && weatherResponse.value.ok) {
-          const weatherData = await weatherResponse.value.json();
-          const current = weatherData.current ?? {};
-          const weather = weatherCodeToStatus(Number(current.weather_code ?? 0));
-          nextStatus = {
-            ...nextStatus,
-            ...weather,
-            temperature: `${Math.round(Number(current.temperature_2m ?? 27))}°C`,
-          };
+        if (response.ok) {
+          const data = await response.json();
+          setLiveStatus((current) => ({
+            ...current,
+            time: data.time ?? current.time,
+            usdRate: data.usdRate ?? current.usdRate,
+            weather: data.weather ?? current.weather,
+            temperature: data.temperature ?? current.temperature,
+            condition: data.condition ?? current.condition,
+          }));
         }
-
-        if (rateResponse.status === "fulfilled" && rateResponse.value.ok) {
-          const rateData = await rateResponse.value.json();
-          const dopRate = Number(rateData.rates?.DOP);
-          if (Number.isFinite(dopRate)) {
-            nextStatus.usdRate = `RD$ ${dopRate.toFixed(2)}`;
-          }
-        }
-
-        setLiveStatus((current) => ({ ...current, ...nextStatus }));
       } catch {
         setLiveStatus((current) => ({ ...current, weather: "Santo Domingo" }));
       }
@@ -569,6 +543,18 @@ export default function DashboardPage() {
               <img src="/space/astronaut-realistic.png" alt="" className="space-astronaut-pose space-astronaut-pose-float absolute inset-0 h-full w-full object-contain" />
               <img src="/space/astronaut-wave-realistic.png" alt="" className="space-astronaut-pose space-astronaut-pose-wave absolute inset-0 h-full w-full object-contain" />
             </div>
+            <span className="night-data-satellite night-data-satellite-one absolute left-1/2 top-[218px]">
+              <img src="/social/whatsapp.webp" alt="" />
+            </span>
+            <span className="night-data-satellite night-data-satellite-two absolute left-1/2 top-[218px]">
+              <img src="/social/instagram.avif" alt="" />
+            </span>
+            <span className="night-data-satellite night-data-satellite-three absolute left-1/2 top-[218px]">
+              <img src="/social/meta.webp" alt="" />
+            </span>
+            <span className="night-data-satellite night-data-satellite-four absolute left-1/2 top-[218px]">
+              <img src="/social/messenger.png" alt="" />
+            </span>
           </div>
           <div className={cn("channel-day-scene pointer-events-none absolute inset-x-0 z-[12] block overflow-hidden dark:hidden", `weather-${liveStatus.condition}`)} aria-hidden="true">
             <span className="day-earth-horizon absolute inset-x-0 bottom-[-118px]" />

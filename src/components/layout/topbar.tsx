@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   Search,
@@ -55,6 +55,7 @@ const mockNotifications = [
     time: "hace 5 min",
     unread: true,
     type: "lead",
+    href: "/messages?channel=WHATSAPP&conversation=conv-1",
   },
   {
     id: "2",
@@ -63,6 +64,7 @@ const mockNotifications = [
     time: "hace 1 hora",
     unread: true,
     type: "installation",
+    href: "/installations",
   },
   {
     id: "3",
@@ -71,6 +73,7 @@ const mockNotifications = [
     time: "hace 2 horas",
     unread: false,
     type: "quote",
+    href: "/quotes",
   },
 ];
 
@@ -78,12 +81,23 @@ interface TopbarProps {
   onMobileMenuToggle?: () => void;
 }
 
+const PROFILE_KEY = "greycrm-profile-demo";
+
+type StoredProfile = {
+  name?: string;
+  email?: string;
+  position?: string;
+  avatar?: string | null;
+};
+
 export function Topbar({ onMobileMenuToggle }: TopbarProps) {
   const { data: session } = useSession();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [profile, setProfile] = useState<StoredProfile | null>(null);
 
   const pageTitle = pathname === "/settings/profile"
     ? "Mi Perfil"
@@ -92,6 +106,30 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
     )?.[1] || "GreyCRM";
 
   const unreadCount = mockNotifications.filter((n) => n.unread).length;
+
+  useEffect(() => {
+    const syncProfile = () => {
+      try {
+        const stored = localStorage.getItem(PROFILE_KEY);
+        setProfile(stored ? JSON.parse(stored) : null);
+      } catch {
+        setProfile(null);
+      }
+    };
+
+    syncProfile();
+    window.addEventListener("storage", syncProfile);
+    window.addEventListener("greycrm-profile-updated", syncProfile);
+    return () => {
+      window.removeEventListener("storage", syncProfile);
+      window.removeEventListener("greycrm-profile-updated", syncProfile);
+    };
+  }, []);
+
+  const displayName = profile?.name || session?.user?.name || "Usuario";
+  const displayEmail = profile?.email || session?.user?.email || "";
+  const displayPosition = profile?.position || "";
+  const displayAvatar = profile?.avatar || session?.user?.avatar || undefined;
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -149,7 +187,7 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
         </Button>
 
         {/* Notifications */}
-        <DropdownMenu>
+        <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -173,7 +211,14 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {mockNotifications.map((notif) => (
-              <DropdownMenuItem key={notif.id} className="flex flex-col items-start p-3 cursor-pointer">
+              <DropdownMenuItem
+                key={notif.id}
+                className="flex flex-col items-start p-3 cursor-pointer"
+                onClick={() => {
+                  setNotifOpen(false);
+                  router.push(notif.href);
+                }}
+              >
                 <div className="flex items-start gap-3 w-full">
                   <div className={cn(
                     "w-2 h-2 rounded-full mt-1.5 shrink-0",
@@ -204,13 +249,13 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
               className="flex items-center gap-2 h-9 px-2 hover:bg-muted"
             >
               <Avatar className="w-7 h-7">
-                <AvatarImage src={session?.user?.avatar || undefined} />
+                <AvatarImage src={displayAvatar} />
                 <AvatarFallback className="bg-blue-600 text-white text-xs">
-                  {getInitials(session?.user?.name || "U")}
+                  {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium hidden sm:block max-w-24 truncate">
-                {session?.user?.name?.split(" ")[0] || "Usuario"}
+                {displayName.split(" ")[0] || "Usuario"}
               </span>
               <ChevronDown className="w-3 h-3 text-muted-foreground hidden sm:block" />
             </Button>
@@ -218,10 +263,13 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div>
-                <p className="font-medium">{session?.user?.name}</p>
+                <p className="font-medium">{displayName}</p>
                 <p className="text-xs text-muted-foreground font-normal">
-                  {session?.user?.email}
+                  {displayEmail}
                 </p>
+                {displayPosition && (
+                  <p className="text-xs text-muted-foreground font-normal">{displayPosition}</p>
+                )}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

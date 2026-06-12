@@ -93,6 +93,7 @@ export default function ProfilePage() {
 
   const saveProfile = () => {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(form));
+    window.dispatchEvent(new CustomEvent("greycrm-profile-updated", { detail: form }));
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
