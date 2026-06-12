@@ -494,49 +494,46 @@
   --orbit-radius: 128px;
   --orbit-start: 0deg;
   z-index: 4;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(14, 165, 233, 0.2);
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(14, 165, 233, 0.18);
   box-shadow:
-    0 12px 28px rgba(15, 23, 42, 0.08),
+    0 10px 24px rgba(15, 23, 42, 0.1),
+    0 0 18px rgba(14, 165, 233, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  color: #0369a1;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
   animation: day-satellite-orbit 24s linear infinite;
 }
 
-.day-data-satellite span {
+.day-data-satellite img {
   display: block;
-  transform: rotate(-8deg);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .day-data-satellite-one {
   --orbit-start: 24deg;
-  background: linear-gradient(135deg, rgba(220, 252, 231, 0.92), rgba(255, 255, 255, 0.74));
-  color: #16a34a;
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.96), rgba(255, 255, 255, 0.84));
 }
 
 .day-data-satellite-two {
   --orbit-radius: 108px;
   --orbit-start: 154deg;
   animation-duration: 29s;
-  background: linear-gradient(135deg, rgba(252, 231, 243, 0.9), rgba(255, 255, 255, 0.76));
-  color: #db2777;
+  background: linear-gradient(135deg, rgba(252, 231, 243, 0.96), rgba(255, 255, 255, 0.84));
 }
 
 .day-data-satellite-three {
   --orbit-radius: 138px;
   --orbit-start: 278deg;
   animation-duration: 32s;
-  background: linear-gradient(135deg, rgba(219, 234, 254, 0.92), rgba(255, 255, 255, 0.76));
-  color: #2563eb;
+  background: linear-gradient(135deg, rgba(219, 234, 254, 0.96), rgba(255, 255, 255, 0.84));
 }
 
 .day-light-sweep {

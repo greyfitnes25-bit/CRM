@@ -472,13 +472,13 @@ export default function DashboardPage() {
             <span className="day-orbit-ring day-orbit-ring-one absolute left-1/2 top-[138px]" />
             <span className="day-orbit-ring day-orbit-ring-two absolute left-1/2 top-[138px]" />
             <span className="day-data-satellite day-data-satellite-one absolute left-1/2 top-[138px]">
-              <span>WA</span>
+              <img src="/social/whatsapp.webp" alt="" />
             </span>
             <span className="day-data-satellite day-data-satellite-two absolute left-1/2 top-[138px]">
-              <span>IG</span>
+              <img src="/social/instagram.avif" alt="" />
             </span>
             <span className="day-data-satellite day-data-satellite-three absolute left-1/2 top-[138px]">
-              <span>AD</span>
+              <img src="/social/meta.webp" alt="" />
             </span>
             <span className="day-light-sweep absolute -left-20 top-20" />
           </div>
