@@ -36,9 +36,9 @@ export const metadata: Metadata = {
   authors: [{ name: "GreyCRM" }],
   creator: "GreyCRM",
   icons: {
-    icon: "/branding/greycrm-isotipo-icon.png",
-    shortcut: "/branding/greycrm-isotipo-icon.png",
-    apple: "/branding/greycrm-isotipo-icon.png",
+    icon: "/branding/greycrm-isotipo-icon-day.png",
+    shortcut: "/branding/greycrm-isotipo-icon-day.png",
+    apple: "/branding/greycrm-isotipo-icon-day.png",
   },
 };
 

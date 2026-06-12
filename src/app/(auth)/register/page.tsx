@@ -7,6 +7,7 @@ import { Building2, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandIsotipo } from "@/components/common/brand-isotipo";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
@@ -66,7 +67,7 @@ export default function RegisterPage() {
       {/* Logo */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-950/70 border border-white/10 mb-4 shadow-2xl shadow-orange-500/20">
-          <img src="/branding/greycrm-isotipo.png" alt="GreyCRM" className="h-16 w-16 object-contain" />
+          <BrandIsotipo className="h-16 w-16" />
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">GreyCRM</h1>
         <p className="text-slate-400 mt-1 text-sm">Crea tu cuenta gratis</p>

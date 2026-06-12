@@ -31,6 +31,7 @@ import { cn, getInitials } from "@/lib/utils";
 import { ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { BrandIsotipo } from "@/components/common/brand-isotipo";
 import { signOut } from "next-auth/react";
 
 const navItems = [
@@ -92,11 +93,11 @@ export function Sidebar({ className }: SidebarProps) {
         "flex items-center h-16 px-4 border-b border-[hsl(var(--sidebar-border))] shrink-0",
         collapsed ? "justify-center" : "gap-3"
       )}>
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-orange-300/60 shrink-0 shadow-lg shadow-orange-500/15 ring-1 ring-blue-500/20 overflow-hidden">
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white dark:bg-slate-950/80 border border-orange-300/60 dark:border-white/10 shrink-0 shadow-lg shadow-orange-500/15 ring-1 ring-blue-500/20 overflow-hidden">
           {companyLogo ? (
             <img src={companyLogo} alt="Logo" className="h-full w-full object-contain p-1" />
           ) : (
-            <img src="/branding/greycrm-isotipo.png" alt="GreyCRM" className="h-full w-full object-contain p-1.5" />
+            <BrandIsotipo className="h-full w-full p-1.5" />
           )}
         </div>
         {!collapsed && (
