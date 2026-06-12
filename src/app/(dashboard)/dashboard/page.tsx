@@ -467,11 +467,20 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="pointer-events-none absolute inset-0 z-[12] block dark:hidden" aria-hidden="true">
-            <span className="day-orb day-orb-primary absolute right-8 top-10" />
-            <span className="day-orb day-orb-secondary absolute left-10 top-28" />
-            <span className="day-signal day-signal-one absolute right-16 top-28" />
-            <span className="day-signal day-signal-two absolute left-20 bottom-20" />
-            <span className="day-glider absolute -left-12 top-24" />
+            <span className="day-earth-horizon absolute inset-x-0 bottom-[-78px]" />
+            <span className="day-sunrise absolute left-1/2 top-[56px]" />
+            <span className="day-orbit-ring day-orbit-ring-one absolute left-1/2 top-[168px]" />
+            <span className="day-orbit-ring day-orbit-ring-two absolute left-1/2 top-[168px]" />
+            <span className="day-data-satellite day-data-satellite-one absolute left-1/2 top-[168px]">
+              <span>WA</span>
+            </span>
+            <span className="day-data-satellite day-data-satellite-two absolute left-1/2 top-[168px]">
+              <span>IG</span>
+            </span>
+            <span className="day-data-satellite day-data-satellite-three absolute left-1/2 top-[168px]">
+              <span>AD</span>
+            </span>
+            <span className="day-light-sweep absolute -left-20 top-20" />
           </div>
           <CardHeader className="relative z-20 pb-4">
             <CardTitle className="text-base">Leads por Canal</CardTitle>
