@@ -64,6 +64,41 @@ const EMPTY_FORM: Omit<Product, "id"> = {
   isAvailable: true, requiresInstallation: false, warrantyMonths: 12
 };
 
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    reader.readAsDataURL(file);
+  });
+
+const compressImageFile = async (file: File) => {
+  const original = await readFileAsDataUrl(file);
+
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
+    img.src = original;
+  });
+
+  const maxSize = 900;
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return original;
+  }
+
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", 0.78);
+};
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
@@ -121,12 +156,15 @@ export default function ProductsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!response.ok) throw new Error("No se pudo guardar el producto");
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "No se pudo guardar el producto");
+      }
       await loadProducts();
       setDialogOpen(false);
     } catch (err) {
       console.error(err);
-      setError("No se pudo guardar el producto. Revisa PostgreSQL y vuelve a intentar.");
+      setError(err instanceof Error ? err.message : "No se pudo guardar el producto.");
     } finally {
       setSaving(false);
     }
@@ -305,15 +343,20 @@ export default function ProductsPage() {
                 <Input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => setForm(f => ({ ...f, image: String(reader.result) }));
-                    reader.readAsDataURL(file);
+                    setError(null);
+                    try {
+                      const image = await compressImageFile(file);
+                      setForm(f => ({ ...f, image }));
+                    } catch (err) {
+                      console.error(err);
+                      setError(err instanceof Error ? err.message : "No se pudo procesar la imagen.");
+                    }
                   }}
                 />
-                <p className="text-xs text-muted-foreground">Puedes pegar una URL o seleccionar una imagen local para vista previa.</p>
+                <p className="text-xs text-muted-foreground">Puedes pegar una URL o seleccionar una imagen local. El CRM la optimiza antes de guardarla.</p>
               </div>
               <div className="h-32 rounded-lg border bg-muted/40 flex items-center justify-center overflow-hidden">
                 {form.image ? (
