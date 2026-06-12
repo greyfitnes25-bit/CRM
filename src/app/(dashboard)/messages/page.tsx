@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +6,7 @@ import {
   MessageSquare, Search, Filter, ChevronDown, Send, Paperclip,
   Smile, MoreVertical, Phone, Video, Star, Tag, UserPlus,
   CheckCheck, Clock, StickyNote, X, ChevronRight, Hash,
-  Globe, Users, Zap, RefreshCw, ArrowLeft,
+  Globe, Users, Zap, RefreshCw, ArrowLeft, Bot, Loader2, RadioTower,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,9 @@ export default function MessagesPage() {
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [showCustomerPanel, setShowCustomerPanel] = useState(true);
   const [showMobileList, setShowMobileList] = useState(true);
+  const [metaNotice, setMetaNotice] = useState<string | null>(null);
+  const [syncingMeta, setSyncingMeta] = useState(false);
+  const [suggestingAi, setSuggestingAi] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
@@ -97,13 +100,14 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentMessages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!messageText.trim() || !selectedId) return;
+    const textToSend = messageText.trim();
     const newMsg = {
       id: `msg-${Date.now()}`,
-      content: messageText.trim(),
+      content: textToSend,
       direction: "OUTBOUND" as const,
-      senderName: "Tú",
+      senderName: "Tu",
       sentAt: new Date(),
       type: messageMode === "note" ? ("note" as const) : ("text" as const),
     };
@@ -111,14 +115,73 @@ export default function MessagesPage() {
     setConversations((prev) =>
       prev.map((c) =>
         c.id === selectedId
-          ? { ...c, lastMessage: messageText.trim(), lastMessageAt: new Date(), unread: 0 }
+          ? { ...c, lastMessage: textToSend, lastMessageAt: new Date(), unread: 0 }
           : c
       )
     );
     setMessageText("");
     setShowQuickReplies(false);
+
+    if (messageMode === "reply" && selected && selected.channel !== "WEB") {
+      try {
+        const response = await fetch("/api/integrations/meta/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: selected.channel,
+            recipient: selected.customer.phone || selected.customer.id,
+            message: textToSend,
+          }),
+        });
+        const data = await response.json();
+        setMetaNotice(data?.message || "Mensaje enviado por el canal conectado.");
+      } catch {
+        setMetaNotice("El mensaje quedo guardado localmente. Revisa la conexion Meta.");
+      }
+    } else if (messageMode === "note") {
+      setMetaNotice("Nota interna guardada. No se envio al cliente.");
+    }
   };
 
+  const handleMetaSync = async () => {
+    setSyncingMeta(true);
+    setMetaNotice(null);
+    try {
+      const response = await fetch("/api/integrations/meta/sync", { method: "POST" });
+      const data = await response.json();
+      setMetaNotice(`${data.message} Conversaciones: ${data.imported?.conversations ?? 0}, leads: ${data.imported?.leads ?? 0}.`);
+    } catch {
+      setMetaNotice("No se pudo sincronizar Meta. Verifica internet y variables de entorno.");
+    } finally {
+      setSyncingMeta(false);
+    }
+  };
+
+  const handleAiSuggest = async () => {
+    if (!selectedId || !selected) return;
+    const lastInbound = [...currentMessages].reverse().find((msg) => msg.direction === "INBOUND");
+    setSuggestingAi(true);
+    setMetaNotice(null);
+    try {
+      const response = await fetch("/api/ai/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent: "Recepcionista IA",
+          message: lastInbound?.content || selected.lastMessage,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "No se pudo generar respuesta IA.");
+      setMessageMode("reply");
+      setMessageText(data.reply);
+      setMetaNotice(`${data.summary} Respuesta IA lista para revisar y enviar.`);
+    } catch (error) {
+      setMetaNotice(error instanceof Error ? error.message : "No se pudo generar respuesta IA.");
+    } finally {
+      setSuggestingAi(false);
+    }
+  };
   const handleSelectConversation = (id: string) => {
     setSelectedId(id);
     setShowMobileList(false);
@@ -138,7 +201,7 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden">
-      {/* ─── PANEL IZQUIERDO: Lista de conversaciones ─── */}
+      {/* â”€â”€â”€ PANEL IZQUIERDO: Lista de conversaciones â”€â”€â”€ */}
       <div
         className={cn(
           "w-full md:w-80 lg:w-96 flex flex-col border-r border-border bg-background shrink-0",
@@ -156,15 +219,20 @@ export default function MessagesPage() {
                 </Badge>
               )}
             </div>
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs">
-              <RefreshCw className="w-3 h-3" />
-              Sincronizar
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={handleMetaSync} disabled={syncingMeta}>
+              {syncingMeta ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              Meta Sync
             </Button>
           </div>
+          {metaNotice && (
+            <div className="mb-3 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-xs text-primary">
+              {metaNotice}
+            </div>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar conversación..."
+              placeholder="Buscar conversaciÃ³n..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 text-sm"
@@ -292,7 +360,7 @@ export default function MessagesPage() {
         </ScrollArea>
       </div>
 
-      {/* ─── PANEL CENTRAL: Chat ─── */}
+      {/* â”€â”€â”€ PANEL CENTRAL: Chat â”€â”€â”€ */}
       {selected ? (
         <div className={cn(
           "flex-1 flex flex-col min-w-0",
@@ -324,6 +392,21 @@ export default function MessagesPage() {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                onClick={handleAiSuggest}
+                disabled={suggestingAi}
+                title="Generar respuesta con IA"
+              >
+                {suggestingAi ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
+                IA
+              </Button>
+              <Badge variant="outline" className="hidden gap-1 border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-600 sm:flex">
+                <RadioTower className="h-3 w-3" />
+                Meta demo
+              </Badge>
               {/* Status switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -349,7 +432,7 @@ export default function MessagesPage() {
                 <DropdownMenuContent align="end">
                   <div className="px-2 py-1 text-xs text-muted-foreground font-medium">Asignar a</div>
                   <DropdownMenuSeparator />
-                  {["Juan Pérez", "Ana García", "Carlos López"].map((name) => (
+                  {["Juan PÃ©rez", "Ana GarcÃ­a", "Carlos LÃ³pez"].map((name) => (
                     <DropdownMenuItem key={name} onClick={() => {
                       setConversations((prev) =>
                         prev.map((c) => c.id === selectedId ? { ...c, assignedTo: name } : c)
@@ -464,7 +547,7 @@ export default function MessagesPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                       <Zap className="w-3 h-3" />
-                      Respuestas rápidas
+                      Respuestas rÃ¡pidas
                     </span>
                     <button onClick={() => setShowQuickReplies(false)}>
                       <X className="w-4 h-4 text-muted-foreground" />
@@ -536,8 +619,18 @@ export default function MessagesPage() {
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={handleAiSuggest}
+                    disabled={suggestingAi}
+                    title="Sugerir respuesta IA"
+                  >
+                    {suggestingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowQuickReplies(!showQuickReplies)}
-                    title="Respuestas rápidas"
+                    title="Respuestas rÃ¡pidas"
                   >
                     <Zap className="w-4 h-4" />
                   </Button>
@@ -564,7 +657,7 @@ export default function MessagesPage() {
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1 ml-1">
-              {messageMode === "note" ? "⚠️ Nota interna — no se envía al cliente" : "Enter para enviar · Shift+Enter para salto de línea"}
+              {messageMode === "note" ? "âš ï¸ Nota interna â€” no se envÃ­a al cliente" : "Enter para enviar Â· Shift+Enter para salto de lÃ­nea"}
             </p>
           </div>
         </div>
@@ -574,13 +667,13 @@ export default function MessagesPage() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-semibold mb-1">Selecciona una conversación</h2>
-            <p className="text-sm text-muted-foreground">Elige una conversación de la lista para empezar</p>
+            <h2 className="text-lg font-semibold mb-1">Selecciona una conversaciÃ³n</h2>
+            <p className="text-sm text-muted-foreground">Elige una conversaciÃ³n de la lista para empezar</p>
           </div>
         </div>
       )}
 
-      {/* ─── PANEL DERECHO: Info del cliente ─── */}
+      {/* â”€â”€â”€ PANEL DERECHO: Info del cliente â”€â”€â”€ */}
       <AnimatePresence>
         {showCustomerPanel && selected && (
           <motion.div
@@ -690,7 +783,7 @@ export default function MessagesPage() {
                 {/* Footer note */}
                 <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
                   <p className="text-[11px] text-blue-600 dark:text-blue-400 text-center">
-                    💡 Módulo simulado. Conecta WhatsApp Business API para mensajes reales.
+                    ðŸ’¡ MÃ³dulo simulado. Conecta WhatsApp Business API para mensajes reales.
                   </p>
                 </div>
               </div>
@@ -710,3 +803,4 @@ export default function MessagesPage() {
     </div>
   );
 }
+

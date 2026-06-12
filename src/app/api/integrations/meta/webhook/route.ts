@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "greycrm_meta_verify";
+const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || process.env.META_WEBHOOK_VERIFY_TOKEN || "greycrm_meta_verify";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
