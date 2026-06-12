@@ -418,7 +418,7 @@
 }
 
 .day-earth-horizon {
-  height: 205px;
+  height: 178px;
   z-index: 0;
   background:
     radial-gradient(ellipse at 52% 12%, rgba(255, 255, 255, 0.88) 0 3%, transparent 12%),
@@ -431,7 +431,7 @@
     0 -18px 52px rgba(56, 189, 248, 0.24),
     inset 0 16px 34px rgba(255, 255, 255, 0.3),
     inset 0 -28px 58px rgba(30, 64, 175, 0.18);
-  opacity: 0.36;
+  opacity: 0.24;
   animation: day-earth-breathe 14s ease-in-out infinite;
 }
 
@@ -451,20 +451,20 @@
 }
 
 .day-sunrise {
-  width: 142px;
-  height: 142px;
+  width: 118px;
+  height: 118px;
   z-index: 1;
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 8%, rgba(253, 224, 71, 0.72) 9% 18%, rgba(251, 146, 60, 0.28) 26%, transparent 62%);
   border-radius: 999px;
   filter: blur(0.4px);
-  opacity: 0.82;
+  opacity: 0.66;
   animation: day-sunrise-glow 9s ease-in-out infinite;
 }
 
 .day-orbit-ring {
-  width: 410px;
-  height: 116px;
+  width: 300px;
+  height: 84px;
   z-index: 2;
   border-radius: 999px;
   border: 1px solid rgba(14, 165, 233, 0.22);
@@ -478,30 +478,30 @@
 }
 
 .day-orbit-ring-two {
-  width: 330px;
-  height: 88px;
+  width: 244px;
+  height: 66px;
   border-style: dashed;
   border-color: rgba(251, 146, 60, 0.24);
   animation: day-orbit-spin-reverse 34s linear infinite;
 }
 
 .day-data-satellite {
-  --orbit-radius: 174px;
+  --orbit-radius: 128px;
   --orbit-start: 0deg;
   z-index: 4;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.74);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(14, 165, 233, 0.2);
   box-shadow:
     0 12px 28px rgba(15, 23, 42, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: #0369a1;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.04em;
   animation: day-satellite-orbit 24s linear infinite;
@@ -519,7 +519,7 @@
 }
 
 .day-data-satellite-two {
-  --orbit-radius: 148px;
+  --orbit-radius: 108px;
   --orbit-start: 154deg;
   animation-duration: 29s;
   background: linear-gradient(135deg, rgba(252, 231, 243, 0.9), rgba(255, 255, 255, 0.76));
@@ -527,7 +527,7 @@
 }
 
 .day-data-satellite-three {
-  --orbit-radius: 188px;
+  --orbit-radius: 138px;
   --orbit-start: 278deg;
   animation-duration: 32s;
   background: linear-gradient(135deg, rgba(219, 234, 254, 0.92), rgba(255, 255, 255, 0.76));

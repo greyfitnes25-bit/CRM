@@ -466,18 +466,18 @@ export default function DashboardPage() {
               <img src="/space/astronaut-wave-realistic.png" alt="" className="space-astronaut-pose space-astronaut-pose-wave absolute inset-0 h-full w-full object-contain" />
             </div>
           </div>
-          <div className="pointer-events-none absolute inset-0 z-[12] block dark:hidden" aria-hidden="true">
-            <span className="day-earth-horizon absolute inset-x-0 bottom-[-78px]" />
-            <span className="day-sunrise absolute left-1/2 top-[56px]" />
-            <span className="day-orbit-ring day-orbit-ring-one absolute left-1/2 top-[168px]" />
-            <span className="day-orbit-ring day-orbit-ring-two absolute left-1/2 top-[168px]" />
-            <span className="day-data-satellite day-data-satellite-one absolute left-1/2 top-[168px]">
+          <div className="pointer-events-none absolute inset-x-0 top-20 z-[12] block h-[270px] overflow-hidden dark:hidden" aria-hidden="true">
+            <span className="day-earth-horizon absolute inset-x-0 bottom-[-118px]" />
+            <span className="day-sunrise absolute left-1/2 top-[28px]" />
+            <span className="day-orbit-ring day-orbit-ring-one absolute left-1/2 top-[138px]" />
+            <span className="day-orbit-ring day-orbit-ring-two absolute left-1/2 top-[138px]" />
+            <span className="day-data-satellite day-data-satellite-one absolute left-1/2 top-[138px]">
               <span>WA</span>
             </span>
-            <span className="day-data-satellite day-data-satellite-two absolute left-1/2 top-[168px]">
+            <span className="day-data-satellite day-data-satellite-two absolute left-1/2 top-[138px]">
               <span>IG</span>
             </span>
-            <span className="day-data-satellite day-data-satellite-three absolute left-1/2 top-[168px]">
+            <span className="day-data-satellite day-data-satellite-three absolute left-1/2 top-[138px]">
               <span>AD</span>
             </span>
             <span className="day-light-sweep absolute -left-20 top-20" />
