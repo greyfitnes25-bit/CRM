@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/providers/theme-provider";
 import {
   TrendingUp,
   TrendingDown,
@@ -384,6 +385,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const [liveStatus, setLiveStatus] = useState<SantoDomingoLiveStatus>(defaultLiveStatus);
   const today = format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es });
   const hour = new Date().getHours();
@@ -526,7 +528,7 @@ export default function DashboardPage() {
 
         {/* Leads by channel pie */}
         <Card className="channel-space-card relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 z-[12] hidden dark:block" aria-hidden="true">
+          <div className={cn("channel-night-scene pointer-events-none absolute inset-0 z-[12]", resolvedTheme === "dark" ? "block" : "hidden")} aria-hidden="true">
             <span className="shooting-star shooting-star-one absolute -left-12 top-24" />
             <span className="shooting-star shooting-star-two absolute left-12 top-48" />
             <img
@@ -556,7 +558,7 @@ export default function DashboardPage() {
               <img src="/social/messenger.png" alt="" />
             </span>
           </div>
-          <div className={cn("channel-day-scene pointer-events-none absolute inset-x-0 z-[12] block overflow-hidden dark:hidden", `weather-${liveStatus.condition}`)} aria-hidden="true">
+          <div className={cn("channel-day-scene pointer-events-none absolute inset-x-0 z-[12] overflow-hidden", resolvedTheme === "dark" ? "hidden" : "block", resolvedTheme === "sunset" && "sunset-scene", `weather-${liveStatus.condition}`)} aria-hidden="true">
             <span className="day-earth-horizon absolute inset-x-0 bottom-[-118px]" />
             <span className="day-sunrise absolute left-1/2 top-[28px]" />
             <span className="day-cloud day-cloud-one absolute" />
@@ -579,20 +581,41 @@ export default function DashboardPage() {
             </span>
             <span className="day-light-sweep absolute -left-20 top-20" />
           </div>
-          <div className="absolute right-4 top-4 z-30 hidden max-w-[245px] flex-wrap items-start justify-end gap-2 text-right dark:hidden sm:flex">
-            <div className="rounded-xl border border-sky-200/70 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
-              <div className="font-semibold text-slate-900">{liveStatus.time}</div>
-              <div className="text-sky-700">Santo Domingo</div>
+          {resolvedTheme !== "dark" && (
+            <div className="absolute right-4 top-4 z-30 hidden max-w-[245px] flex-wrap items-start justify-end gap-2 text-right sm:flex">
+              {resolvedTheme === "sunset" ? (
+                <>
+                  <div className="rounded-xl border border-orange-400/30 bg-orange-950/60 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+                    <div className="font-semibold text-orange-100">{liveStatus.time}</div>
+                    <div className="text-orange-300">Santo Domingo</div>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-orange-950/60 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+                    <div className="font-semibold text-orange-100">USD</div>
+                    <div className="text-amber-400">{liveStatus.usdRate}</div>
+                  </div>
+                  <div className="rounded-xl border border-orange-400/30 bg-orange-950/60 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+                    <div className="font-semibold text-orange-100">{liveStatus.temperature}</div>
+                    <div className="text-orange-300">{liveStatus.weather}</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-sky-200/70 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+                    <div className="font-semibold text-slate-900">{liveStatus.time}</div>
+                    <div className="text-sky-700">Santo Domingo</div>
+                  </div>
+                  <div className="rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+                    <div className="font-semibold text-slate-900">USD</div>
+                    <div className="text-amber-700">{liveStatus.usdRate}</div>
+                  </div>
+                  <div className="rounded-xl border border-sky-200/70 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+                    <div className="font-semibold text-slate-900">{liveStatus.temperature}</div>
+                    <div className="text-sky-700">{liveStatus.weather}</div>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
-              <div className="font-semibold text-slate-900">USD</div>
-              <div className="text-amber-700">{liveStatus.usdRate}</div>
-            </div>
-            <div className="rounded-xl border border-sky-200/70 bg-white/80 px-3 py-2 text-xs shadow-sm backdrop-blur-md">
-              <div className="font-semibold text-slate-900">{liveStatus.temperature}</div>
-              <div className="text-sky-700">{liveStatus.weather}</div>
-            </div>
-          </div>
+          )}
           <CardHeader className="relative z-20 pb-4">
             <CardTitle className="text-base">Leads por Canal</CardTitle>
             <CardDescription>Distribución de canales</CardDescription>

@@ -61,8 +61,12 @@ export default function RootLayout({
                   var resolved = theme === "system"
                     ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
                     : theme;
-                  document.documentElement.classList.remove("light", "dark");
-                  document.documentElement.classList.add(resolved);
+                  document.documentElement.classList.remove("light", "dark", "sunset");
+                  if (resolved === "sunset") {
+                    document.documentElement.classList.add("dark", "sunset");
+                  } else {
+                    document.documentElement.classList.add(resolved);
+                  }
                   var defaultFont = "var(--font-poppins), Poppins, var(--font-geist-sans), system-ui, sans-serif";
                   var storedFont = localStorage.getItem("greycrm-font-family");
                   if (!storedFont || /\\b(serif|georgia|times|cambria|garamond|baskerville)\\b/i.test(storedFont)) {

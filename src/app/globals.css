@@ -950,3 +950,139 @@
   border-radius: 999px;
   transform: rotate(-16deg);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SUNSET / ATARDECER SCENE OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Sunset HUD ring colors */
+.sunset .channel-space-card {
+  --channel-glow: #fb923c;
+  --channel-orbit: #f97316;
+  --channel-center-a: #1c0a00;
+  --channel-center-b: #140600;
+  --channel-center-c: #0a0200;
+  --channel-center-stroke: #7c2d12;
+  --channel-track: #431407;
+  --channel-label: #fdba74;
+  --channel-total: #fff7ed;
+  --channel-caption: #fb923c;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(251, 146, 60, 0.28), transparent 38%),
+    radial-gradient(ellipse at 50% 60%, rgba(239, 68, 68, 0.12), transparent 52%),
+    linear-gradient(180deg, rgba(28, 10, 0, 0.82) 0%, rgba(20, 6, 0, 0.96) 100%);
+  border-color: rgba(251, 146, 60, 0.18);
+}
+
+/* Sunset card starfield — warm stars */
+.sunset .channel-space-card::before {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 220, 180, 0.78) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 72% 14%, rgba(251, 191, 36, 0.66) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 36% 62%, rgba(249, 115, 22, 0.46) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 84% 78%, rgba(244, 114, 182, 0.42) 0 1px, transparent 1.7px);
+  background-size: 94px 94px, 138px 138px, 82px 82px, 122px 122px;
+  background-position: 0 0, 34px 18px, 12px 46px, 70px 22px;
+  opacity: 0.5;
+  animation: hud-starfield 30s linear infinite;
+}
+
+.sunset .channel-space-card::after {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(251, 146, 60, 0.22), rgba(124, 45, 18, 0.16) 19%, transparent 42%),
+    radial-gradient(ellipse at 50% 32%, rgba(239, 68, 68, 0.2), rgba(249, 115, 22, 0.1) 33%, transparent 62%),
+    linear-gradient(180deg, rgba(20, 6, 0, 0.62) 0%, transparent 18%, transparent 72%, rgba(20, 6, 0, 0.62) 100%);
+  opacity: 1;
+}
+
+.sunset .channel-chart-shell {
+  background: transparent;
+}
+
+/* Sunset scene: earth with warm glow */
+.sunset-scene .day-earth-horizon {
+  background:
+    radial-gradient(ellipse at 52% 12%, rgba(255, 200, 100, 0.7) 0 3%, transparent 12%),
+    radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.6), transparent 20%),
+    radial-gradient(ellipse at 50% 9%, rgba(251, 146, 60, 0.7), transparent 13%),
+    radial-gradient(ellipse at 50% 38%, rgba(124, 45, 18, 0.42), transparent 42%),
+    linear-gradient(135deg, rgba(239, 68, 68, 0.72), rgba(251, 146, 60, 0.6) 38%, rgba(124, 45, 18, 0.5) 72%, rgba(30, 10, 4, 0.4));
+  box-shadow:
+    0 -18px 52px rgba(251, 146, 60, 0.3),
+    inset 0 16px 34px rgba(255, 200, 100, 0.2),
+    inset 0 -28px 58px rgba(124, 45, 18, 0.22);
+  opacity: 0.32;
+}
+
+/* Sunset sun: deep orange-red */
+.sunset-scene .day-sunrise {
+  background:
+    radial-gradient(circle, rgba(255, 230, 150, 0.88) 0 8%, rgba(251, 146, 60, 0.8) 9% 18%, rgba(239, 68, 68, 0.4) 26%, transparent 62%);
+  filter: blur(0.6px);
+  opacity: 0.82;
+}
+
+/* Sunset clouds: warm pink-orange tint */
+.sunset-scene .day-cloud {
+  background:
+    radial-gradient(ellipse at 22% 62%, rgba(255, 200, 160, 0.92) 0 18%, transparent 33%),
+    radial-gradient(ellipse at 40% 34%, rgba(255, 180, 120, 0.9) 0 27%, transparent 43%),
+    radial-gradient(ellipse at 62% 42%, rgba(251, 146, 60, 0.78) 0 24%, transparent 42%),
+    radial-gradient(ellipse at 82% 62%, rgba(239, 68, 68, 0.6) 0 18%, transparent 35%),
+    linear-gradient(180deg, rgba(255, 200, 160, 0.86), rgba(239, 68, 68, 0.44) 56%, rgba(124, 45, 18, 0.2));
+  border-color: rgba(251, 146, 60, 0.28);
+  filter:
+    blur(0.05px)
+    drop-shadow(0 14px 20px rgba(251, 146, 60, 0.18))
+    drop-shadow(0 0 18px rgba(255, 150, 80, 0.48));
+}
+
+.sunset-scene .day-cloud::before {
+  background:
+    radial-gradient(ellipse at 26% 58%, rgba(255, 200, 160, 0.92) 0 23%, transparent 45%),
+    radial-gradient(ellipse at 62% 42%, rgba(251, 146, 60, 0.84) 0 28%, transparent 48%),
+    linear-gradient(180deg, rgba(255, 180, 120, 0.9), rgba(239, 68, 68, 0.38));
+  box-shadow: inset -16px -14px 24px rgba(124, 45, 18, 0.12);
+}
+
+/* Sunset orbit rings: warm amber */
+.sunset-scene .day-orbit-ring {
+  border-color: rgba(251, 146, 60, 0.28);
+  box-shadow:
+    inset 0 0 12px rgba(251, 146, 60, 0.1),
+    0 0 20px rgba(251, 146, 60, 0.1);
+}
+
+.sunset-scene .day-orbit-ring-two {
+  border-color: rgba(239, 68, 68, 0.26);
+}
+
+/* Sunset satellites: warm glow */
+.sunset-scene .day-data-satellite {
+  background: linear-gradient(135deg, rgba(255, 210, 170, 0.9), rgba(30, 10, 4, 0.75));
+  border-color: rgba(251, 146, 60, 0.25);
+  box-shadow:
+    0 10px 24px rgba(124, 45, 18, 0.25),
+    0 0 18px rgba(251, 146, 60, 0.18),
+    inset 0 1px 0 rgba(255, 200, 150, 0.4);
+}
+
+/* Sunset light sweep: warm orange */
+.sunset-scene .day-light-sweep {
+  background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.22), rgba(255, 230, 150, 0.88), rgba(239, 68, 68, 0.24), transparent);
+  filter: drop-shadow(0 0 10px rgba(251, 146, 60, 0.4));
+}
+
+/* Sunset rain: warm drizzle */
+.sunset-scene .day-rain {
+  background-image: repeating-linear-gradient(110deg, rgba(251, 146, 60, 0.28) 0 1px, transparent 1px 16px);
+}
+
+@keyframes sunset-glow-pulse {
+  0%, 100% { opacity: 0.6; transform: translate3d(-50%, 0, 0) scale(0.94); }
+  50% { opacity: 1; transform: translate3d(-50%, -6px, 0) scale(1.12); }
+}
+
+.sunset-scene .day-sunrise {
+  animation: sunset-glow-pulse 7s ease-in-out infinite !important;
+}
