@@ -86,7 +86,15 @@ export const APPEARANCE_THEMES: Array<{
 const THEME_KEY = "greycrm-appearance-theme";
 const DEFAULT_THEME: AppearanceThemeId = "grey";
 
+/** Returns true when the base theme is "sunset" (set by ThemeProvider) */
+function isSunsetActive(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("greycrm-theme") === "sunset";
+}
+
 function applyAppearance(themeId: string) {
+  if (isSunsetActive()) return;
+
   const theme = APPEARANCE_THEMES.find((item) => item.id === themeId) ?? APPEARANCE_THEMES[0];
   Object.entries(theme.vars).forEach(([name, value]) => {
     document.documentElement.style.setProperty(name, value);
@@ -100,6 +108,9 @@ export function AppearancePreferenceProvider({ children }: { children: React.Rea
 
     const onStorage = (event: StorageEvent) => {
       if (event.key === THEME_KEY) applyAppearance(event.newValue ?? DEFAULT_THEME);
+      if (event.key === "greycrm-theme") {
+        applyAppearance(localStorage.getItem(THEME_KEY) ?? DEFAULT_THEME);
+      }
     };
 
     window.addEventListener("storage", onStorage);

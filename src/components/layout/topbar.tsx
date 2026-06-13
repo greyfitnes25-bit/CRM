@@ -8,6 +8,7 @@ import {
   Search,
   Sun,
   Moon,
+  Sunset,
   User,
   Settings,
   LogOut,
@@ -26,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/components/providers/theme-provider";
+import { useTheme, type Theme } from "@/components/providers/theme-provider";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
 
@@ -77,6 +78,12 @@ const mockNotifications = [
   },
 ];
 
+const THEME_OPTIONS: Array<{ key: Theme; label: string; icon: React.ElementType }> = [
+  { key: "light",  label: "Día",        icon: Sun    },
+  { key: "sunset", label: "Atardecer",  icon: Sunset },
+  { key: "dark",   label: "Noche",      icon: Moon   },
+];
+
 interface TopbarProps {
   onMobileMenuToggle?: () => void;
 }
@@ -92,7 +99,7 @@ type StoredProfile = {
 
 export function Topbar({ onMobileMenuToggle }: TopbarProps) {
   const { data: session } = useSession();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -102,8 +109,8 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
   const pageTitle = pathname === "/settings/profile"
     ? "Mi Perfil"
     : Object.entries(PAGE_TITLES).find(([path]) =>
-      pathname === path || pathname.startsWith(path + "/")
-    )?.[1] || "GreyCRM";
+        pathname === path || pathname.startsWith(path + "/")
+      )?.[1] || "GreyCRM";
 
   const unreadCount = mockNotifications.filter((n) => n.unread).length;
 
@@ -131,34 +138,17 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
   const displayPosition = profile?.position || "";
   const displayAvatar = profile?.avatar || session?.user?.avatar || undefined;
 
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  };
-
   return (
     <header className="h-16 border-b bg-background/80 backdrop-blur-md border-border flex items-center px-6 gap-4 shrink-0 sticky top-0 z-30">
-      {/* Mobile menu toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="md:hidden"
-        onClick={onMobileMenuToggle}
-      >
+      <Button variant="ghost" size="icon" className="md:hidden" onClick={onMobileMenuToggle}>
         <Menu className="w-5 h-5" />
       </Button>
 
-      {/* Page title */}
       <div className="flex-1">
-        <h1 className="text-lg font-semibold text-foreground hidden sm:block">
-          {pageTitle}
-        </h1>
+        <h1 className="text-lg font-semibold text-foreground hidden sm:block">{pageTitle}</h1>
       </div>
 
-      {/* Search */}
-      <div className={cn(
-        "hidden md:flex items-center",
-        searchOpen ? "w-64" : "w-48"
-      )}>
+      <div className={cn("hidden md:flex items-center", searchOpen ? "w-64" : "w-48")}>
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -170,65 +160,55 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-2">
-        {/* Theme toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="w-9 h-9 text-muted-foreground hover:text-foreground"
+        {/* 3-way theme picker: Día / Atardecer / Noche */}
+        <div
+          className="hidden sm:flex items-center rounded-lg border border-border/60 bg-muted/50 p-0.5 gap-0.5"
+          title="Apariencia"
         >
-          {resolvedTheme === "dark" ? (
-            <Sun className="w-4 h-4" />
-          ) : (
-            <Moon className="w-4 h-4" />
-          )}
-        </Button>
+          {THEME_OPTIONS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTheme(key)}
+              title={label}
+              className={cn(
+                "flex items-center justify-center w-8 h-7 rounded-md transition-all duration-150",
+                theme === key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" />
+            </button>
+          ))}
+        </div>
 
-        {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-9 h-9 text-muted-foreground hover:text-foreground relative"
-            >
+            <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground relative">
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[hsl(var(--primary))]" />
               )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="flex items-center justify-between">
               <span>Notificaciones</span>
-              {unreadCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {unreadCount} nuevas
-                </Badge>
-              )}
+              {unreadCount > 0 && <Badge variant="secondary" className="text-xs">{unreadCount} nuevas</Badge>}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {mockNotifications.map((notif) => (
               <DropdownMenuItem
                 key={notif.id}
                 className="flex flex-col items-start p-3 cursor-pointer"
-                onClick={() => {
-                  setNotifOpen(false);
-                  router.push(notif.href);
-                }}
+                onClick={() => { setNotifOpen(false); router.push(notif.href); }}
               >
                 <div className="flex items-start gap-3 w-full">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mt-1.5 shrink-0",
-                    notif.unread ? "bg-blue-500" : "bg-transparent"
-                  )} />
+                  <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", notif.unread ? "bg-[hsl(var(--primary))]" : "bg-transparent")} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{notif.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {notif.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{notif.description}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{notif.time}</p>
                   </div>
                 </div>
@@ -241,16 +221,12 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="flex items-center gap-2 h-9 px-2 hover:bg-muted"
-            >
+            <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 hover:bg-muted">
               <Avatar className="w-7 h-7">
                 <AvatarImage src={displayAvatar} />
-                <AvatarFallback className="bg-blue-600 text-white text-xs">
+                <AvatarFallback className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs">
                   {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
@@ -264,34 +240,44 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
             <DropdownMenuLabel>
               <div>
                 <p className="font-medium">{displayName}</p>
-                <p className="text-xs text-muted-foreground font-normal">
-                  {displayEmail}
-                </p>
-                {displayPosition && (
-                  <p className="text-xs text-muted-foreground font-normal">{displayPosition}</p>
-                )}
+                <p className="text-xs text-muted-foreground font-normal">{displayEmail}</p>
+                {displayPosition && <p className="text-xs text-muted-foreground font-normal">{displayPosition}</p>}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {/* Mobile theme picker */}
+            <div className="flex items-center justify-between px-2 py-1.5 sm:hidden">
+              <span className="text-xs text-muted-foreground">Apariencia</span>
+              <div className="flex items-center rounded-md border border-border/60 bg-muted/50 p-0.5 gap-0.5">
+                {THEME_OPTIONS.map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTheme(key)}
+                    title={label}
+                    className={cn(
+                      "flex items-center justify-center w-7 h-6 rounded transition-all",
+                      theme === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <DropdownMenuSeparator className="sm:hidden" />
             <DropdownMenuItem asChild>
               <Link href="/settings/profile" className="cursor-pointer">
-                <User className="w-4 h-4 mr-2" />
-                Mi Perfil
+                <User className="w-4 h-4 mr-2" />Mi Perfil
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/settings" className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" />
-                Configuración
+                <Settings className="w-4 h-4 mr-2" />Configuración
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-red-600 focus:text-red-600 cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Cerrar Sesión
+            <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })} className="text-red-600 focus:text-red-600 cursor-pointer">
+              <LogOut className="w-4 h-4 mr-2" />Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

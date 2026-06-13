@@ -64,6 +64,37 @@
     --sidebar-border: 216 34% 14%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* ── Sunset / Atardecer theme ─────────────────────────────── */
+  .sunset {
+    --background: 24 30% 8%;
+    --foreground: 30 80% 95%;
+    --card: 22 28% 11%;
+    --card-foreground: 30 80% 95%;
+    --popover: 22 28% 11%;
+    --popover-foreground: 30 80% 95%;
+    --primary: 25 90% 60%;
+    --primary-foreground: 22 25% 8%;
+    --secondary: 24 25% 16%;
+    --secondary-foreground: 30 70% 90%;
+    --muted: 24 25% 16%;
+    --muted-foreground: 28 35% 62%;
+    --accent: 30 55% 22%;
+    --accent-foreground: 30 80% 95%;
+    --destructive: 0 65% 42%;
+    --destructive-foreground: 30 80% 95%;
+    --border: 24 22% 19%;
+    --input: 24 22% 19%;
+    --ring: 25 90% 60%;
+    --sidebar-background: 22 38% 7%;
+    --sidebar-foreground: 30 55% 86%;
+    --sidebar-primary: 25 90% 60%;
+    --sidebar-primary-foreground: 22 38% 7%;
+    --sidebar-accent: 24 32% 12%;
+    --sidebar-accent-foreground: 30 55% 86%;
+    --sidebar-border: 24 32% 12%;
+    --sidebar-ring: 25 90% 60%;
+  }
 }
 
 @layer base {
