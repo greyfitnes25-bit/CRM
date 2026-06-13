@@ -7,16 +7,26 @@ export async function middleware(req: NextRequest) {
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isApiAuthRoute = pathname.startsWith("/api/auth");
-  const isStaticAsset = /^\/(space|social|icons|images|branding|_next)\//.test(pathname)
-    || /\.(png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2)$/.test(pathname);
+  const isStaticAsset =
+    /^\/(space|social|icons|images|branding|_next)\//.test(pathname) ||
+    /\.(png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2)$/.test(pathname);
 
   if (isApiAuthRoute || isStaticAsset) {
     return NextResponse.next();
   }
 
+  // NextAuth v5 beta uses __Secure- prefix on HTTPS / Vercel
+  const secureCookie =
+    process.env.NEXTAUTH_URL?.startsWith("https://") ??
+    !!process.env.VERCEL;
+  const cookieName = secureCookie
+    ? "__Secure-next-auth.session-token"
+    : "next-auth.session-token";
+
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName,
   });
 
   const isLoggedIn = !!token;
