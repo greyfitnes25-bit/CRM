@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   let customerId = body.customerId;
   let items = body.items;
   let total = Number(body.total) || 0;
-  let quoteId = body.quoteId || null;
+  const quoteId = body.quoteId || null;
 
   if (quoteId) {
     const quote = await prisma.quote.findFirst({

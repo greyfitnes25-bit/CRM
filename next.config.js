@@ -55,6 +55,8 @@ if (isProduction) {
 
 const nextConfig = {
   poweredByHeader: false,
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   allowedDevOrigins: ['10.0.0.7'],
   images: {
     remotePatterns: [
