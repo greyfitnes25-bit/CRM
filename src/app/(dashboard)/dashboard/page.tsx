@@ -565,6 +565,9 @@ export default function DashboardPage() {
             <span className="day-cloud day-cloud-two absolute" />
             <span className="day-cloud day-cloud-three absolute" />
             <span className="day-rain absolute" />
+            <span className="day-lightning-flash absolute" />
+            <span className="day-lightning-bolt-a absolute" />
+            <span className="day-lightning-bolt-b absolute" />
             <span className="day-orbit-ring day-orbit-ring-one absolute left-1/2 top-[138px]" />
             <span className="day-orbit-ring day-orbit-ring-two absolute left-1/2 top-[138px]" />
             <span className="day-data-satellite day-data-satellite-one absolute left-1/2 top-[138px]">
