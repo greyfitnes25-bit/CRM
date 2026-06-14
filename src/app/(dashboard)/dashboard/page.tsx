@@ -559,7 +559,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className={cn("channel-day-scene pointer-events-none absolute inset-x-0 z-[12] overflow-hidden", resolvedTheme === "dark" ? "hidden" : "block", resolvedTheme === "sunset" && "sunset-scene", `weather-${liveStatus.condition}`)} aria-hidden="true">
-            <span className="day-earth-horizon absolute inset-x-0 bottom-[-118px]" />
+
             <span className="day-sunrise absolute left-1/2 top-[28px]" />
             <span className="day-cloud day-cloud-one absolute" />
             <span className="day-cloud day-cloud-two absolute" />
