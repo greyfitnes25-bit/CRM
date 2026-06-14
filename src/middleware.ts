@@ -15,12 +15,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // On Vercel (HTTPS), NextAuth always sets __Secure- prefix cookies.
-  // We check VERCEL env var first so that a local http NEXTAUTH_URL doesn't break prod.
+  // NextAuth v5 (beta) uses "authjs." prefix, not "next-auth." prefix.
+  // On Vercel/HTTPS the cookie is prefixed with __Secure-.
   const secureCookie = !!process.env.VERCEL || req.nextUrl.protocol === "https:";
   const cookieName = secureCookie
-    ? "__Secure-next-auth.session-token"
-    : "next-auth.session-token";
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
 
   const token = await getToken({
     req,
